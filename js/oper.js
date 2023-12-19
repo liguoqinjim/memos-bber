@@ -44,7 +44,7 @@ get_info(function (info) {
   var memoNow = info.memo_lock
   if(memoNow == ''){
     chrome.storage.sync.set(
-      { memo_lock: 'PUBLIC'}
+      { memo_lock: 'PRIVATE'} //默认memo为私有
     )
     $("#lock-now").text(chrome.i18n.getMessage("lockPublic"))
   }
