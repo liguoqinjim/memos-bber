@@ -61,8 +61,10 @@ function generateMarkdownLink() {
     // 特定网站处理
     if (url.includes('bbs.quantclass.cn')) {
       title = title.replace(' - 量化小论坛', '');
-    }else if (url.includes('twitter.com')) {
+    } else if (url.includes('twitter.com')) {
       title = title.replace(' / X', '');
+    } else if (url.includes('youtube.com')) {
+      title = title.replace(' - YouTube', '');
     }
 
     let markdownLink = `[${title}](${url})`;
