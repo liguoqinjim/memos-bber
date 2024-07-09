@@ -22,16 +22,29 @@
       "tabs",
       "storage",
       "activeTab",
-      "contextMenus"
+      "contextMenus",
+      "clipboardRead",
+      "clipboardWrite",
+      "offscreen"
    ],
-   "host_permissions": ["http://*/*", "https://*/*"],
+   "host_permissions": [
+      "http://*/*",
+      "https://*/*"
+   ],
    "commands": {
       "open-extension": {
         "description": "Open my extension",
         "suggested_key": {
             "default": "Ctrl+Shift+F",
             "mac": "MacCtrl+Shift+F"
-        }
+         }
+      },
+      "copy-markdown-link": {
+         "description": "Copy markdown link",
+         "suggested_key": {
+            "default": "Alt+2",
+            "mac": "Alt+2"
+         }
       }
     }
 }
