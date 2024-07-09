@@ -57,7 +57,17 @@ function generateMarkdownLink() {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     let title = tabs[0].title;
     let url = tabs[0].url;
+
+    // 特定网站处理
+    if (url.includes('bbs.quantclass.cn')) {
+      title = title.replace(' - 量化小论坛', '');
+    }else if (url.includes('twitter.com')) {
+      title = title.replace(' / X', '');
+    }
+
     let markdownLink = `[${title}](${url})`;
+
+    // 剪贴板
     addToClipboard(markdownLink);
     // addToClipboardV2(markdownLink);
   });
