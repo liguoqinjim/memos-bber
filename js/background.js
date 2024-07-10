@@ -65,6 +65,8 @@ function generateMarkdownLink() {
       title = title.replace(' / X', '');
     } else if (url.includes('youtube.com')) {
       title = title.replace(' - YouTube', '');
+    } else if (url.includes('bilibili.com')) {
+      title = title.replace('_哔哩哔哩_bilibili', '');
     }
 
     let markdownLink = `[${title}](${url})`;
