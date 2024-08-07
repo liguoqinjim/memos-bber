@@ -65,6 +65,34 @@ function generateMarkdownLink() {
       title = title.replace(' / X', '');
     } else if (url.includes('youtube.com')) {
       title = title.replace(' - YouTube', '');
+
+      // 判断开头是否有这样的格式： “(1) 當年為什麼退出聯合國？”，去掉开头
+      const regex = /^\(\d+\)\s/; // regex pattern to match "(1) " at the beginning of the title
+      if (regex.test(title)) {
+        title = title.replace(regex, '');
+      }
+
+      // 获取页面的HTML内容，查询ytp-time-current这个class的内容
+      chrome.scripting.executeScript(
+        {
+          target: { tabId: tabs[0].id },
+          func: () => document.querySelector('.ytp-time-current')?.textContent,
+        },
+        (results) => {
+          if (results && results[0] && results[0].result) {
+            const currentTime = results[0].result;
+            
+            if (currentTime != "0:00"){
+              title += ` | ${currentTime}`;
+            }
+          }
+          let markdownLink = `[${title}](${url})`;
+          // 剪贴板
+          addToClipboard(markdownLink);
+        }
+      );
+      return
+
     } else if (url.includes('bilibili.com')) {
       title = title.replace('_哔哩哔哩_bilibili', '');
     }

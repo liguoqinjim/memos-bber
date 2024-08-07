@@ -25,7 +25,8 @@
       "contextMenus",
       "clipboardRead",
       "clipboardWrite",
-      "offscreen"
+      "offscreen",
+      "scripting"
    ],
    "host_permissions": [
       "http://*/*",
