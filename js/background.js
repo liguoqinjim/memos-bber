@@ -92,9 +92,17 @@ function generateMarkdownLink() {
         }
       );
       return
-
     } else if (url.includes('bilibili.com')) {
       title = title.replace('_哔哩哔哩_bilibili', '');
+    } else if (url.includes('github.com')) {
+      // 判断url是否符合这个正则表达式：https://github.com/jaegertracing/jaeger
+      const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+/;
+      if (regex.test(url)) {
+        // 使用‘:’分割title
+        const titleParts = title.split(':');
+        const repoName = titleParts[0].split('/')[1];
+        title = "GitHub - " + repoName;
+      }
     }
 
     let markdownLink = `[${title}](${url})`;
