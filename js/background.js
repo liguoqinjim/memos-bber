@@ -103,6 +103,8 @@ function generateMarkdownLink() {
         const repoName = titleParts[0].split('/')[1];
         title = "GitHub - " + repoName;
       }
+    } else if (url.includes('v2ex')) {
+      title = title.replace(' - V2EX', '');
     }
 
     let markdownLink = `[${title}](${url})`;
