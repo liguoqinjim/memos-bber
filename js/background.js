@@ -105,6 +105,8 @@ function generateMarkdownLink() {
       }
     } else if (url.includes('v2ex')) {
       title = title.replace(' - V2EX', '');
+    } else if (url.includes('.smzdm.com')) { // 什么值得买
+      title = title.replace('__什么值得买', '-什么值得买');
     }
 
     let markdownLink = `[${title}](${url})`;
