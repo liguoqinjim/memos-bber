@@ -20,6 +20,9 @@
    "saveBtn":{
       "message": "Save"
    },
+   "saveHabiticaBtn":{
+      "message": "Save Habitica"
+   },
    "placeApiUrl":{
       "message": "Memos Self Home Url"
    },
@@ -40,6 +43,9 @@
    },
    "submitBtn":{
       "message": "Save"
+   },
+   "submitHabiticaBtn":{
+      "message": "Habitica"
    },
    "placeHideInput":{
       "message": "Default 'Only visible to you' Tag name"

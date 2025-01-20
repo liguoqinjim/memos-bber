@@ -282,6 +282,22 @@ $('#saveKey').click(function () {
   });
 });
 
+$('#saveHabitica').click(function () {
+  // 保存 Habitica 信息
+  chrome.storage.sync.set(
+    {
+      habitica_user_id: $('#habitica_user_id').val(),
+      habitica_api_key: $('#habitica_api_key').val()
+    },
+    function () {
+      $.message({
+        message: chrome.i18n.getMessage("saveHabiticaSuccess")
+      })
+      $('#blog_info').hide();
+    }
+  )
+})
+
 $('#opensite').click(function () {
   get_info(function (info) {
     chrome.tabs.create({url:info.apiUrl})

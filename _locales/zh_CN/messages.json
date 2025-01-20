@@ -20,6 +20,9 @@
    "saveBtn":{
       "message": "保存"
    },
+   "saveHabiticaBtn":{
+      "message": "保存 Habitica"
+   },
    "placeApiUrl":{
       "message": "请填入 Memos 主页网址"
    },
@@ -40,6 +43,9 @@
    },
    "submitBtn":{
       "message": "记下"
+   },
+   "submitHabiticaBtn":{
+      "message": "任务"
    },
    "placeHideInput":{
       "message": "默认“仅自己可见”标签名"

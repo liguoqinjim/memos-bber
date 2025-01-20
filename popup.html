@@ -38,6 +38,29 @@
           required
         />
         <span id="saveKey" class="action-btn confirm-btn"></span>
+
+        <!-- Habitica的信息 -->
+        <input
+          id="habitica_user_id"
+          class="inputer"
+          name="habitica_user_id"
+          type="text"
+          value=""
+          maxlength="245"
+          placeholder=""
+          required
+        />
+        <input
+          id="habitica_api_key"
+          class="inputer"
+          name="habitica_api_key"
+          type="text"
+          value=""
+          maxlength="245"
+          placeholder=""
+          required
+        />
+        <span id="saveHabitica" class="action-btn confirm-btn"></span>
     </div>
 
     <div class="memo-editor">
@@ -97,6 +120,9 @@
     </div>
     <div class="btns-container" type="submit" name="submit" id="submit">
       <button id="content_submit_text" class="action-btn confirm-btn"><img class="icon-img" src="../assets/logo_24x24.png"></button>
+    </div>
+    <div class="btns-container" type="submit" name="submit" id="submit">
+      <button id="content_habitica_text" class="action-btn confirm-btn"><img class="icon-img" src="../assets/logo_24x24.png"></button>
     </div>
   </div>
   <div class="tag-list" id="taglist"></div>

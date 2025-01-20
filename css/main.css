@@ -84,6 +84,7 @@ a{color: #555;}
 input.inputer{border-bottom: 1px solid #ccc;width:75%;}
 
 #saveKey{margin:0;flex:1;}
+#saveHabitica{margin:0;flex:1;}
 
 .common-tools-wrapper {
     position: relative;
