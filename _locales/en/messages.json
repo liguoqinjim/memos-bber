@@ -92,6 +92,9 @@
    "memoUploading":{
       "message": "Sending"
    },
+   "memoHabiticaUploading":{
+      "message": "Sending to Habitica"
+   },
    "memoSuccess":{
       "message": "Success! 😊"
    },

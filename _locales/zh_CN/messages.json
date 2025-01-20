@@ -92,6 +92,9 @@
    "memoUploading":{
       "message": "发送中……"
    },
+   "memoHabiticaUploading":{
+      "message": "发送至 Habitica 中……"
+   },
    "memoSuccess":{
       "message": "发送成功！😊"
    },
