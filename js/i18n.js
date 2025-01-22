@@ -12,6 +12,7 @@ document.getElementById("lockPublic").textContent = chrome.i18n.getMessage("lock
 
 document.getElementById("content_submit_text").textContent = chrome.i18n.getMessage("submitBtn");
 document.getElementById("content_habitica_text").textContent = chrome.i18n.getMessage("submitHabiticaBtn");
+document.getElementById("content_ob_text").textContent = chrome.i18n.getMessage("submitObBtn");
 
 document.getElementById("hideInput").placeholder = chrome.i18n.getMessage("placeHideInput");
 document.getElementById("showInput").placeholder = chrome.i18n.getMessage("placeShowInput");

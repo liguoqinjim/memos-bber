@@ -45,7 +45,10 @@
       "message": "Save"
    },
    "submitHabiticaBtn":{
-      "message": "Habitica"
+      "message": "Habitica Task"
+   },
+   "submitObBtn":{
+      "message": "Obsidian"
    },
    "placeHideInput":{
       "message": "Default 'Only visible to you' Tag name"

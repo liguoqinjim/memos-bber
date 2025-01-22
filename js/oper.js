@@ -705,6 +705,17 @@ $('#content_habitica_text').click(function () {
   }
 })
 
+$('#content_ob_text').click(function () {
+  var contentVal = $("textarea[name=text]").val()
+  if (contentVal) {
+    createObsidianTask()
+  } else {
+    $.message({
+      message: chrome.i18n.getMessage("placeContent")
+    })
+  }
+})
+
 function createHabiticaTask() {
   get_info(function (info) {
     if (info.status) {
@@ -749,3 +760,7 @@ function createHabiticaTask() {
     }
   })
 }  
+
+function createObsidianTask() {
+  console.log("createObsidianTask")
+}

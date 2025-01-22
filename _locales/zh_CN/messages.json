@@ -45,7 +45,10 @@
       "message": "记下"
    },
    "submitHabiticaBtn":{
-      "message": "任务"
+      "message": "Habitica任务"
+   },
+   "submitObBtn":{
+      "message": "Obsidian"
    },
    "placeHideInput":{
       "message": "默认“仅自己可见”标签名"
