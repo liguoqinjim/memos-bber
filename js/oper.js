@@ -759,8 +759,58 @@ function createHabiticaTask() {
       })
     }
   })
-}  
+}
 
 function createObsidianTask() {
-  console.log("createObsidianTask")
+  get_info(function (info) {
+    if (info.status) {
+      $.message({
+        message: chrome.i18n.getMessage("memoHabiticaUploading")
+      })
+      let content = $("textarea[name=text]").val()
+
+      let regex = /\[(.*?)\]\(.*?\)/;
+      let match = content.match(regex);
+      let title = match ? match[1] : '';
+
+      let urlRegex = /\[(.*?)\]\((.*?)\)/;
+      let urlMatch = content.match(urlRegex);
+      let url = urlMatch ? urlMatch[2] : '';
+
+      const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
+      $.ajax({
+        url: obsidian_n8n_url,
+        type: "POST",
+        data: JSON.stringify({
+          "note_title": title,
+          "template_name": "知识点-视频",
+          "target_dir": "900-待归类",
+          "note_url": url
+        }),
+        contentType: "application/json",
+        dataType: "json",
+        success: function (data) {
+          if (data.result === 1) {
+            $.message({
+              message: data['data']
+            })
+          } else {
+            $.message({
+              message: chrome.i18n.getMessage("memoSuccess")
+            })
+          }
+        }, error: function (err) {//清空open_action（打开时候进行的操作）,同时清空open_content
+          console.log("createObsidianTask error", err)
+          $.message({
+            // message: chrome.i18n.getMessage("memoFailed")
+            message: "创建 Obsidian 任务失败: " + JSON.stringify(err)
+          })
+        },
+      })
+    } else {
+      $.message({
+        message: chrome.i18n.getMessage("placeApiUrl")
+      })
+    }
+  })
 }
