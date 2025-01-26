@@ -777,6 +777,8 @@ function createObsidianTask() {
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
 
+      title = getCleanTitle(url, title);
+
       const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
       $.ajax({
         url: obsidian_n8n_url,
@@ -813,4 +815,38 @@ function createObsidianTask() {
       })
     }
   })
+}
+
+function getCleanTitle(url, title) {
+  // 特定网站处理
+  if (url.includes('bbs.quantclass.cn')) {
+    title = title.replace(' - 量化小论坛', '');
+  } else if (url.includes('twitter.com')) {
+    title = title.replace(' / X', '');
+  } else if (url.includes('youtube.com')) {
+    title = title.replace(' - YouTube', '');
+
+    // 判断开头是否有这样的格式： “(1) 當年為什麼退出聯合國？”，去掉开头
+    const regex = /^\(\d+\)\s/; // regex pattern to match "(1) " at the beginning of the title
+    if (regex.test(title)) {
+      title = title.replace(regex, '');
+    }
+  } else if (url.includes('bilibili.com')) {
+    title = title.replace('_哔哩哔哩_bilibili', '');
+  } else if (url.includes('github.com')) {
+    // 判断url是否符合这个正则表达式：https://github.com/jaegertracing/jaeger
+    const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+/;
+    if (regex.test(url)) {
+      // 使用‘:’分割title
+      const titleParts = title.split(':');
+      const repoName = titleParts[0].split('/')[1];
+      title = "GitHub - " + repoName;
+    }
+  } else if (url.includes('v2ex')) {
+    title = title.replace(' - V2EX', '');
+  } else if (url.includes('.smzdm.com')) { // 什么值得买
+    title = title.replace('__什么值得买', '-什么值得买');
+  }
+
+  return title;
 }
