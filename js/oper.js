@@ -725,14 +725,27 @@ function createHabiticaTask() {
       //$("#content_submit_text").attr('disabled','disabled');
       let content = $("textarea[name=text]").val()
 
+      let regex = /\[(.*?)\]\(.*?\)/;
+      let match = content.match(regex);
+      let title = match ? match[1] : '';
+      let urlRegex = /\[(.*?)\]\((.*?)\)/;
+      let urlMatch = content.match(urlRegex);
+      let url = urlMatch ? urlMatch[2] : '';
+      title = getCleanTitle(url, title);
+      title = "[" + title + "]" + "(" + url + ")";
+
       const habitica_url = "https://habitica.com/api/v3/tasks/user"
       $.ajax({
         url: habitica_url,
         type: "POST",
         data: JSON.stringify({
-          'text': content,
+          'text': title,
           'type': 'todo',
-          'priority': 1,
+          'checklist': [
+            {'text':"ANKI"},
+            {'text':"OB笔记-score"}
+          ],
+          'priority': 1.5,
         }),
         contentType: "application/json",
         dataType: "json",
@@ -772,11 +785,9 @@ function createObsidianTask() {
       let regex = /\[(.*?)\]\(.*?\)/;
       let match = content.match(regex);
       let title = match ? match[1] : '';
-
       let urlRegex = /\[(.*?)\]\((.*?)\)/;
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
-
       title = getCleanTitle(url, title);
 
       const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
