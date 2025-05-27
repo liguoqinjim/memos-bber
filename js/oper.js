@@ -859,7 +859,6 @@ function getCleanTitle(url, title) {
     title = title.replace('__什么值得买', '-什么值得买');
   } else if (url.includes('web.cafe')) {
     title = title.replace(' | Web.Cafe', '');
-    console.log("Web.Cafe title:", title);
   }
 
   return title;
