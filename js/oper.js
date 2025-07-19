@@ -152,19 +152,19 @@ function uploadImage(file) {
     message: chrome.i18n.getMessage("picUploading"),
     autoClose: false
   });
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    const base64String = e.target.result.split(',')[1];
-    uploadImageNow(base64String, file);
-  };
-  reader.onerror = function (error) {
-    console.error('Error reading file:', error);
-  };
-  reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64String = e.target.result.split(',')[1];
+      uploadImageNow(base64String, file);
+    };
+    reader.onerror = function(error) {
+      console.error('Error reading file:', error);
+    };
+    reader.readAsDataURL(file);
 };
 
 function uploadImageNow(base64String, file) {
-  get_info(function (info) {
+  get_info(function(info) {
     if (info.status) {
       let old_name = file.name.split('.');
       let file_ext = file.name.split('.').pop();
@@ -174,10 +174,10 @@ function uploadImageNow(base64String, file) {
       var showTag = info.showtag
       var nowTag = $("textarea[name=text]").val().match(/(#[^\s#]+)/)
       var sendvisi = info.memo_lock || ''
-      if (nowTag) {
-        if (nowTag[1] == showTag) {
+      if(nowTag){
+        if(nowTag[1] == showTag){
           sendvisi = 'PUBLIC'
-        } else if (nowTag[1] == hideTag) {
+        }else if(nowTag[1] == hideTag){
           sendvisi = 'PRIVATE'
         }
       }
@@ -235,7 +235,7 @@ function uploadImageNow(base64String, file) {
           }
         }
       });
-    } else {
+    }else {
       $.message({
         message: chrome.i18n.getMessage("placeApiUrl")
       })
@@ -331,7 +331,7 @@ $('#tags').click(function () {
   })
 })
 
-$(document).on("click", "#hideTag", function () {
+$(document).on("click","#hideTag",function () {
   $('#taghide').slideToggle(500)
 })
 
@@ -352,16 +352,16 @@ $('#saveTag').click(function () {
 })
 
 $('#lock').click(function () {
-  $("#lock-wrapper").toggleClass("!hidden", 1000);
+  $("#lock-wrapper").toggleClass( "!hidden", 1000 );
 })
 
-$(document).on("click", ".item-lock", function () {
-  $("#lock-wrapper").toggleClass("!hidden", 1000);
+$(document).on("click",".item-lock",function () {
+  $("#lock-wrapper").toggleClass( "!hidden", 1000 );
   $("#lock-now").text($(this).text())
-  _this = $(this)[0].dataset.type;
-  chrome.storage.sync.set(
-    { memo_lock: _this }
-  )
+    _this = $(this)[0].dataset.type;
+    chrome.storage.sync.set(
+      {memo_lock: _this}
+    )
 })
 
 $('#search').click(function () {
@@ -486,44 +486,44 @@ function randDom(randomData){
   })
 }
 
-$(document).on("click", "#random-link", function () {
+$(document).on("click","#random-link",function () {
   var memoUid = $("#random-link").data('uid');
   get_info(function (info) {
-    chrome.tabs.create({ url: info.apiUrl + "m/" + memoUid })
+    chrome.tabs.create({url:info.apiUrl+"m/"+memoUid})
   })
 })
 
-$(document).on("click", "#random-delete", function () {
-  get_info(function (info) {
+$(document).on("click","#random-delete",function () {
+get_info(function (info) {
   // var memoUid = $("#random-delete").data('uid');
-    var memosName = $("#random-delete").data('name');
-    var deleteUrl = info.apiUrl + 'api/v1/' + memosName
-    $.ajax({
-      url: deleteUrl,
-      type: "PATCH",
-      data: JSON.stringify({
+  var memosName = $("#random-delete").data('name');
+  var deleteUrl = info.apiUrl+'api/v1/'+memosName
+  $.ajax({
+    url:deleteUrl,
+    type:"PATCH",
+    data:JSON.stringify({
       // 'uid': memoUid,
       'state': "ARCHIVED"
-      }),
+    }),
     contentType:"application/json",
-      dataType: "json",
-      headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-      success: function (result) {
-        $("#randomlist").html('').hide()
-        $.message({
-          message: chrome.i18n.getMessage("archiveSuccess")
-        })
-      }, error: function (err) {//清空open_action（打开时候进行的操作）,同时清空open_content
-        $.message({
-          message: chrome.i18n.getMessage("archiveFailed")
-        })
-      }
-    })
+    dataType:"json",
+    headers : {'Authorization':'Bearer ' + info.apiTokens},
+    success: function(result){
+          $("#randomlist").html('').hide()
+              $.message({
+                message: chrome.i18n.getMessage("archiveSuccess")
+              })
+  },error:function(err){//清空open_action（打开时候进行的操作）,同时清空open_content
+              $.message({
+                message: chrome.i18n.getMessage("archiveFailed")
+              })
+          }
   })
 })
+})
 
-$(document).on("click", ".item-container", function () {
-  var tagHtml = $(this).text() + " "
+$(document).on("click",".item-container",function () {
+  var tagHtml = $(this).text()+" "
   add(tagHtml);
 })
 
@@ -534,10 +534,10 @@ $('#newtodo').click(function () {
 
 $('#getlink').click(function () {
   chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-    var linkHtml = " [" + tab.title + "](" + tab.url + ") "
-    if (tab.url) {
+    var linkHtml = " ["+tab.title+"]("+tab.url+") "
+    if(tab.url){
       add(linkHtml);
-    } else {
+    }else{
       $.message({
         message: chrome.i18n.getMessage("getTabFailed")
       })
@@ -549,13 +549,13 @@ $('#upres').click(async function () {
   $('#inFile').click()
 })
 
-$('#inFile').on('change', function (data) {
-  var fileVal = $('#inFile').val();
+$('#inFile').on('change', function(data){
+  var fileVal = $('#inFile').val();
   var file = null
-  if (fileVal == '') {
+  if(fileVal == '') {
     return;
   }
-  file = this.files[0];
+  file= this.files[0];
   uploadImage(file)
 });
 
@@ -563,10 +563,10 @@ function add(str) {
   var tc = document.getElementById("content");
   var tclen = tc.value.length;
   tc.focus();
-  if (typeof document.selection != "undefined") {
+  if(typeof document.selection != "undefined"){
     document.selection.createRange().text = str;
-  } else {
-    tc.value =
+  }else{
+    tc.value = 
       tc.value.substr(0, tc.selectionStart) +
       str +
       tc.value.substring(tc.selectionStart, tclen);
@@ -579,35 +579,35 @@ $('#blog_info_edit').click(function () {
 
 $('#content_submit_text').click(function () {
   var contentVal = $("textarea[name=text]").val()
-  if (contentVal) {
+  if(contentVal){
     sendText()
-  } else {
+  }else{
     $.message({
       message: chrome.i18n.getMessage("placeContent")
     })
   }
 })
 
-function getOne(memosId) {
+function getOne(memosId){
   get_info(function (info) {
-    if (info.apiUrl) {
-      $("#randomlist").html('').hide()
-      var getUrl = info.apiUrl + 'api/v1/' + memosId
-      $.ajax({
-        url: getUrl,
-        type: "GET",
+  if (info.apiUrl) {
+    $("#randomlist").html('').hide()
+        var getUrl = info.apiUrl+'api/v1/'+memosId
+        $.ajax({
+          url:getUrl,
+          type:"GET",
           contentType:"application/json",
-        dataType: "json",
-        headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-        success: function (data) {
-          randDom(data)
-        }
-      })
-    } else {
-      $.message({
-        message: chrome.i18n.getMessage("placeApiUrl")
-      })
-    }
+          dataType:"json",
+          headers : {'Authorization':'Bearer ' + info.apiTokens},
+          success: function(data){
+            randDom(data)
+          }
+        })
+  } else {
+    $.message({
+      message: chrome.i18n.getMessage("placeApiUrl")
+    })
+  }
   })
 }
 
@@ -623,17 +623,17 @@ function sendText() {
       var showTag = info.showtag
       var nowTag = $("textarea[name=text]").val().match(/(#[^\s#]+)/)
       var sendvisi = info.memo_lock || ''
-      if (nowTag) {
-        if (nowTag[1] == showTag) {
+      if(nowTag){
+        if(nowTag[1] == showTag){
           sendvisi = 'PUBLIC'
-        } else if (nowTag[1] == hideTag) {
+        }else if(nowTag[1] == hideTag){
           sendvisi = 'PRIVATE'
         }
       }
       $.ajax({
-        url: info.apiUrl + 'api/v1/memos',
-        type: "POST",
-        data: JSON.stringify({
+        url:info.apiUrl+'api/v1/memos',
+        type:"POST",
+        data:JSON.stringify({
           'content': content,
           'visibility': sendvisi
         }),
@@ -685,7 +685,7 @@ function sendText() {
       })
     }
   })
-}
+}  
 
 // Habitica
 $('#saveHabitica').click(function () {
