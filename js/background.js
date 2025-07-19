@@ -52,28 +52,63 @@ chrome.commands.onCommand.addListener(function (command) {
   }
 });
 
+// 清除url中的query参数
+function clearUrl(url){
+  if(url.includes('bilibili.com')){
+    return url.split('?')[0];
+  }
+  return url;
+}
+
+// 清理标题，去除不同网站的特定后缀
+function clearTitle(title, url) {
+  // 特定网站处理
+  if (url.includes('bbs.quantclass.cn')) {
+    title = title.replace(' - 量化小论坛', '');
+  } else if (url.includes('twitter.com') || url.includes('x.com')) {
+    // 去除X
+    title = title.replace(' / X', '');
+    title = title.replace(/https?:\/\/\S+/gi, ''); // 使用正则表达式移除所有http/https链接
+  } else if (url.includes('youtube.com')) {
+    title = title.replace(' - YouTube', '');
+    
+    // 判断开头是否有这样的格式： "(1) 當年為什麼退出聯合國？"，去掉开头
+    const regex = /^\(\d+\)\s/; // regex pattern to match "(1) " at the beginning of the title
+    if (regex.test(title)) {
+      title = title.replace(regex, '');
+    }
+  } else if (url.includes('bilibili.com')) {
+    title = title.replace('_哔哩哔哩_bilibili', '');
+  } else if (url.includes('github.com')) {
+    // 判断url是否符合这个正则表达式：https://github.com/jaegertracing/jaeger
+    const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+/;
+    if (regex.test(url)) {
+      // 使用':'分割title
+      const titleParts = title.split(':');
+      const repoName = titleParts[0].split('/')[1];
+      title = "GitHub - " + repoName;
+    }
+  } else if (url.includes('v2ex')) {
+    title = title.replace(' - V2EX', '');
+  } else if (url.includes('.smzdm.com')) { // 什么值得买
+    title = title.replace('__什么值得买', '-什么值得买');
+  } else if (url.includes('web.cafe')) {
+    title = title.replace(' | Web.Cafe', '');
+  }
+  
+  return title;
+}
+
 function generateMarkdownLink() {
   //获取当前标签页的标题和链接
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     let title = tabs[0].title;
-    let url = tabs[0].url;
+    let url = clearUrl(tabs[0].url);
 
-    // 特定网站处理
-    if (url.includes('bbs.quantclass.cn')) {
-      title = title.replace(' - 量化小论坛', '');
-    } else if (url.includes('twitter.com') || url.includes('x.com')) {
-      // 去除X
-      title = title.replace(' / X', '');
-      title = title.replace(/https?:\/\/\S+/gi, ''); // 使用正则表达式移除所有http/https链接
-    } else if (url.includes('youtube.com')) {
-      title = title.replace(' - YouTube', '');
-
-      // 判断开头是否有这样的格式： “(1) 當年為什麼退出聯合國？”，去掉开头
-      const regex = /^\(\d+\)\s/; // regex pattern to match "(1) " at the beginning of the title
-      if (regex.test(title)) {
-        title = title.replace(regex, '');
-      }
-
+    // YouTube需要特殊处理，因为需要异步获取播放时间
+    if (url.includes('youtube.com')) {
+      title = clearTitle(title, url); // 先清理基本标题
+      
       // 获取页面的HTML内容，查询ytp-time-current这个class的内容
       chrome.scripting.executeScript(
         {
@@ -94,30 +129,14 @@ function generateMarkdownLink() {
         }
       );
       return
-    } else if (url.includes('bilibili.com')) {
-      title = title.replace('_哔哩哔哩_bilibili', '');
-    } else if (url.includes('github.com')) {
-      // 判断url是否符合这个正则表达式：https://github.com/jaegertracing/jaeger
-      const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+/;
-      if (regex.test(url)) {
-        // 使用‘:’分割title
-        const titleParts = title.split(':');
-        const repoName = titleParts[0].split('/')[1];
-        title = "GitHub - " + repoName;
-      }
-    } else if (url.includes('v2ex')) {
-      title = title.replace(' - V2EX', '');
-    } else if (url.includes('.smzdm.com')) { // 什么值得买
-      title = title.replace('__什么值得买', '-什么值得买');
-    } else if (url.includes('web.cafe')) {
-      title = title.replace(' | Web.Cafe', '');
     }
 
+    // 其他网站直接使用clearTitle函数
+    title = clearTitle(title, url);
     let markdownLink = `[${title}](${url})`;
 
     // 剪贴板
     addToClipboard(markdownLink);
-    // addToClipboardV2(markdownLink);
   });
 }
 
