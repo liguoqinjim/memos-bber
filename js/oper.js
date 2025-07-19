@@ -198,11 +198,13 @@ function uploadImageNow(base64String, file) {
         dataType: 'json',
         headers: { 'Authorization': 'Bearer ' + info.apiTokens },
         success: function (data) {
-          if (data.uid) {
+          // 0.24 版本+ 返回体uid已合并到name字段
+          if (data.name) {
+            // 更新上传的文件信息并暂存浏览器本地
             relistNow.push({
-              "name": data.name,
-              "uid": data.uid,
-              "type": data.type
+              "name":data.name,
+              "createTime":data.createTime,
+              "type":data.type
             })
             chrome.storage.sync.set(
               {
@@ -259,13 +261,15 @@ $('#saveKey').click(function () {
   };
 
   $.ajax(settings).done(function (response) {
-    if (response && response.id) {
-      // 如果响应包含用户 ID，存储 apiUrl 和 apiTokens
+    // 0.24 版本后无 id 字段，改为从 name 字段获取和判断认证是否成功
+    if (response && response.name) {
+      // 如果响应包含用户name "users/{id}"，存储 apiUrl 和 apiTokens
+      var userid = parseInt(response.name.split('/').pop(), 10)
       chrome.storage.sync.set(
         {
           apiUrl: apiUrl,
           apiTokens: apiTokens,
-          userid: response.id
+          userid: userid
         },
         function () {
           $.message({
@@ -290,26 +294,29 @@ $('#saveKey').click(function () {
 
 $('#opensite').click(function () {
   get_info(function (info) {
-    chrome.tabs.create({ url: info.apiUrl })
+    chrome.tabs.create({url:info.apiUrl})
   })
 })
 
+// 0.23.1版本 GET api/v1/{parent}/tags 接口已移除，参考 https://github.com/usememos/memos/issues/4161 
 $('#tags').click(function () {
   get_info(function (info) {
     if (info.apiUrl) {
-      var parent = "memos/-";
-      // 如果不使用 user 过滤，会返回所有用户的标签
-      var filter = "?filter=" + encodeURIComponent(`creator == 'users/${info.userid}'`);
-      var tagUrl = info.apiUrl + 'api/v1/' + parent + '/tags' + filter;
+      var parent = `users/${info.userid}`;
+      // 从最近的1000条memo中获取tags,因此不保证获取能全部的
+      var tagUrl = info.apiUrl + 'api/v1/' + parent + '/memos?pageSize=1000';
       var tagDom = "";
       $.ajax({
         url: tagUrl,
         type: "GET",
-        contentType: "application/json;",
+        contentType: "application/json",
         dataType: "json",
         headers: { 'Authorization': 'Bearer ' + info.apiTokens },
         success: function (data) {
-          $.each(data.tagAmounts, function (tag, amount) {
+          // 提前并去重所有标签
+          const allTags = data.memos.flatMap(memo => memo.tags);
+          const uniTags = [...new Set(allTags)];
+          $.each(uniTags, function (_, tag) {
             tagDom += '<span class="item-container">#' + tag + '</span>';
           });
           tagDom += '<svg id="hideTag" class="hidetag" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path d="M78.807 362.435c201.539 314.275 666.962 314.188 868.398-.241 16.056-24.99 13.143-54.241-4.04-62.54-17.244-8.377-40.504 3.854-54.077 24.887-174.484 272.338-577.633 272.41-752.19.195-13.573-21.043-36.874-33.213-54.113-24.837-17.177 8.294-20.06 37.545-3.978 62.536z" fill="#fff"/><path d="M894.72 612.67L787.978 494.386l38.554-34.785 106.742 118.251-38.554 34.816zM635.505 727.51l-49.04-147.123 49.255-16.41 49.054 147.098-49.27 16.435zm-236.18-12.001l-49.568-15.488 43.29-138.48 49.557 15.513-43.28 138.455zM154.49 601.006l-38.743-34.565 95.186-106.732 38.763 34.566-95.206 106.731z" fill="#fff"/></svg>'
@@ -359,80 +366,83 @@ $(document).on("click", ".item-lock", function () {
 
 $('#search').click(function () {
   get_info(function (info) {
-    const pattern = $("textarea[name=text]").val()
-    var filter = "?filter=" + encodeURIComponent(`creator == 'users/${info.userid}' && visibilities == ['PUBLIC', 'PROTECTED'] && content_search == ['${pattern}']`);
-    if (info.status) {
-      $("#randomlist").html('').hide()
-      var searchDom = ""
-      if (pattern) {
-        $.ajax({
-          url: info.apiUrl + "api/v1/memos" + filter,
-          type: "GET",
-          contentType: "application/json;",
-          dataType: "json",
-          headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-          success: function (data) {
-            let searchData = data.memos
-            if (searchData.length == 0) {
-              $.message({
-                message: chrome.i18n.getMessage("searchNone")
-              })
-            } else {
-              for (var i = 0; i < searchData.length; i++) {
-                searchDom += '<div class="random-item"><div class="random-time"><span id="random-link" data-uid="' + searchData[i].uid + '"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M864 640a32 32 0 0 1 64 0v224.096A63.936 63.936 0 0 1 864.096 928H159.904A63.936 63.936 0 0 1 96 864.096V159.904C96 124.608 124.64 96 159.904 96H384a32 32 0 0 1 0 64H192.064A31.904 31.904 0 0 0 160 192.064v639.872A31.904 31.904 0 0 0 192.064 864h639.872A31.904 31.904 0 0 0 864 831.936V640zm-485.184 52.48a31.84 31.84 0 0 1-45.12-.128 31.808 31.808 0 0 1-.128-45.12L815.04 166.048l-176.128.736a31.392 31.392 0 0 1-31.584-31.744 32.32 32.32 0 0 1 31.84-32l255.232-1.056a31.36 31.36 0 0 1 31.584 31.584L924.928 388.8a32.32 32.32 0 0 1-32 31.84 31.392 31.392 0 0 1-31.712-31.584l.736-179.392L378.816 692.48z" fill="#666" data-spm-anchor-id="a313x.7781069.0.i12" class="selected"/></svg></span><span id="random-delete" data-name="' + searchData[i].name + '" data-uid="' + searchData[i].uid + '"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M224 322.6h576c16.6 0 30-13.4 30-30s-13.4-30-30-30H224c-16.6 0-30 13.4-30 30 0 16.5 13.5 30 30 30zm66.1-144.2h443.8c16.6 0 30-13.4 30-30s-13.4-30-30-30H290.1c-16.6 0-30 13.4-30 30s13.4 30 30 30zm339.5 435.5H394.4c-16.6 0-30 13.4-30 30s13.4 30 30 30h235.2c16.6 0 30-13.4 30-30s-13.4-30-30-30z" fill="#666"/><path d="M850.3 403.9H173.7c-33 0-60 27-60 60v360c0 33 27 60 60 60h676.6c33 0 60-27 60-60v-360c0-33-27-60-60-60zm-.1 419.8l-.1.1H173.9l-.1-.1V464l.1-.1h676.2l.1.1v359.7z" fill="#666"/></svg></span>' + dayjs(searchData.createTime).fromNow() + '</div><div class="random-content">' + searchData[i].content.replace(/!\[.*?\]\((.*?)\)/g, ' <img class="random-image" src="$1"/> ').replace(/\[(.*?)\]\((.*?)\)/g, ' <a href="$2" target="_blank">$1</a> ') + '</div>'
-                if (searchData[i].resources && searchData[i].resources.length > 0) {
-                  var resources = searchData[i].resources;
-                  for (var j = 0; j < resources.length; j++) {
-                    var restype = resources[j].type.slice(0, 5);
-                    var resexlink = resources[j].externalLink
-                    var resLink = '', fileId = ''
-                    if (resexlink) {
-                      resLink = resexlink
-                    } else {
-                      fileId = resources[j].publicId || resources[j].filename
-                      resLink = info.apiUrl + 'file/' + resources[j].name + '/' + fileId
-                    }
-                    if (restype == 'image') {
-                      searchDom += '<img class="random-image" src="' + resLink + '"/>'
-                    }
-                    if (restype !== 'image') {
-                      searchDom += '<a target="_blank" rel="noreferrer" href="' + resLink + '">' + resources[j].filename + '</a>'
-                    }
+  const pattern = $("textarea[name=text]").val()
+  var parent = `users/${info.userid}`;
+  var filter = "?filter=" + encodeURIComponent(`visibility in ["PUBLIC","PROTECTED"] && content.contains("${pattern}")`);
+  if (info.status) {
+    $("#randomlist").html('').hide()
+    var searchDom = ""
+    if(pattern){
+      $.ajax({
+        url:info.apiUrl+"api/v1/"+parent+"/memos"+filter,
+        type:"GET",
+        contentType:"application/json",
+        dataType:"json",
+        headers : {'Authorization':'Bearer ' + info.apiTokens},
+        success: function(data){
+          let searchData = data.memos
+          if(searchData.length == 0){
+            $.message({
+              message: chrome.i18n.getMessage("searchNone")
+            })
+          }else{
+            for(var i=0;i < searchData.length;i++){
+              var memosID = searchData[i].name.split('/').pop();
+              searchDom += '<div class="random-item"><div class="random-time"><span id="random-link" data-uid="'+memosID+'"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M864 640a32 32 0 0 1 64 0v224.096A63.936 63.936 0 0 1 864.096 928H159.904A63.936 63.936 0 0 1 96 864.096V159.904C96 124.608 124.64 96 159.904 96H384a32 32 0 0 1 0 64H192.064A31.904 31.904 0 0 0 160 192.064v639.872A31.904 31.904 0 0 0 192.064 864h639.872A31.904 31.904 0 0 0 864 831.936V640zm-485.184 52.48a31.84 31.84 0 0 1-45.12-.128 31.808 31.808 0 0 1-.128-45.12L815.04 166.048l-176.128.736a31.392 31.392 0 0 1-31.584-31.744 32.32 32.32 0 0 1 31.84-32l255.232-1.056a31.36 31.36 0 0 1 31.584 31.584L924.928 388.8a32.32 32.32 0 0 1-32 31.84 31.392 31.392 0 0 1-31.712-31.584l.736-179.392L378.816 692.48z" fill="#666" data-spm-anchor-id="a313x.7781069.0.i12" class="selected"/></svg></span><span id="random-delete" data-name="'+searchData[i].name+'" data-uid="'+memosID+'"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M224 322.6h576c16.6 0 30-13.4 30-30s-13.4-30-30-30H224c-16.6 0-30 13.4-30 30 0 16.5 13.5 30 30 30zm66.1-144.2h443.8c16.6 0 30-13.4 30-30s-13.4-30-30-30H290.1c-16.6 0-30 13.4-30 30s13.4 30 30 30zm339.5 435.5H394.4c-16.6 0-30 13.4-30 30s13.4 30 30 30h235.2c16.6 0 30-13.4 30-30s-13.4-30-30-30z" fill="#666"/><path d="M850.3 403.9H173.7c-33 0-60 27-60 60v360c0 33 27 60 60 60h676.6c33 0 60-27 60-60v-360c0-33-27-60-60-60zm-.1 419.8l-.1.1H173.9l-.1-.1V464l.1-.1h676.2l.1.1v359.7z" fill="#666"/></svg></span>'+dayjs(searchData.createTime).fromNow()+'</div><div class="random-content">'+searchData[i].content.replace(/!\[.*?\]\((.*?)\)/g,' <img class="random-image" src="$1"/> ').replace(/\[(.*?)\]\((.*?)\)/g,' <a href="$2" target="_blank">$1</a> ')+'</div>'
+              if(searchData[i].resources && searchData[i].resources.length > 0){
+                var resources = searchData[i].resources;
+                for(var j=0;j < resources.length;j++){
+                  var restype = resources[j].type.slice(0,5);
+                  var resexlink = resources[j].externalLink
+                  var resLink = '',fileId=''
+                  if(resexlink){
+                    resLink = resexlink
+                  }else{
+                    fileId = resources[j].publicId || resources[j].filename
+                    resLink = info.apiUrl+'file/'+resources[j].name+'/'+fileId
+                }
+                  if(restype == 'image'){
+                    searchDom += '<img class="random-image" src="'+resLink+'"/>'
+                  }
+                  if(restype !== 'image'){
+                    searchDom += '<a target="_blank" rel="noreferrer" href="'+resLink+'">'+resources[j].filename+'</a>'
                   }
                 }
-                searchDom += '</div>'
               }
-              window.ViewImage && ViewImage.init('.random-image')
-              $("#randomlist").html(searchDom).slideDown(500);
+              searchDom += '</div>'
             }
+            window.ViewImage && ViewImage.init('.random-image')
+            $("#randomlist").html(searchDom).slideDown(500);
           }
-        });
-      } else {
-        $.message({
-          message: chrome.i18n.getMessage("searchNow")
-        })
-      }
-    } else {
+        }
+      });
+    }else{
       $.message({
-        message: chrome.i18n.getMessage("placeApiUrl")
+        message: chrome.i18n.getMessage("searchNow")
       })
     }
-  })
+  } else {
+    $.message({
+      message: chrome.i18n.getMessage("placeApiUrl")
+    })
+  }
+})
 })
 
 $('#random').click(function () {
   get_info(function (info) {
-    var filter = "?filter=" + encodeURIComponent(`creator == 'users/${info.userid}'`);
+    var parent = `users/${info.userid}`;
+    var filter = "?filter=" + encodeURIComponent(`visibility in ["PUBLIC","PROTECTED"]`);
     if (info.status) {
       $("#randomlist").html('').hide()
-      var randomUrl = info.apiUrl + 'api/v1/memos' + filter;
+      var randomUrl = info.apiUrl + "api/v1/" +parent + "/memos" + filter;
       $.ajax({
-        url: randomUrl,
-        type: "GET",
-        contentType: "application/json;",
-        dataType: "json",
-        headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-        success: function (data) {
+        url:randomUrl,
+        type:"GET",
+        contentType:"application/json",
+        dataType:"json",
+        headers : {'Authorization':'Bearer ' + info.apiTokens},
+        success: function(data){
           let randomNum = Math.floor(Math.random() * (data.memos.length));
           var randomData = data.memos[randomNum]
           randDom(randomData)
@@ -446,32 +456,33 @@ $('#random').click(function () {
   })
 })
 
-function randDom(randomData) {
+function randDom(randomData){
   get_info(function (info) {
-    var randomDom = '<div class="random-item"><div class="random-time"><span id="random-link" data-uid="' + randomData.uid + '"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M864 640a32 32 0 0 1 64 0v224.096A63.936 63.936 0 0 1 864.096 928H159.904A63.936 63.936 0 0 1 96 864.096V159.904C96 124.608 124.64 96 159.904 96H384a32 32 0 0 1 0 64H192.064A31.904 31.904 0 0 0 160 192.064v639.872A31.904 31.904 0 0 0 192.064 864h639.872A31.904 31.904 0 0 0 864 831.936V640zm-485.184 52.48a31.84 31.84 0 0 1-45.12-.128 31.808 31.808 0 0 1-.128-45.12L815.04 166.048l-176.128.736a31.392 31.392 0 0 1-31.584-31.744 32.32 32.32 0 0 1 31.84-32l255.232-1.056a31.36 31.36 0 0 1 31.584 31.584L924.928 388.8a32.32 32.32 0 0 1-32 31.84 31.392 31.392 0 0 1-31.712-31.584l.736-179.392L378.816 692.48z" fill="#666" data-spm-anchor-id="a313x.7781069.0.i12" class="selected"/></svg></span><span id="random-delete" data-uid="' + randomData.uid + '" data-name="' + randomData.name + '"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M224 322.6h576c16.6 0 30-13.4 30-30s-13.4-30-30-30H224c-16.6 0-30 13.4-30 30 0 16.5 13.5 30 30 30zm66.1-144.2h443.8c16.6 0 30-13.4 30-30s-13.4-30-30-30H290.1c-16.6 0-30 13.4-30 30s13.4 30 30 30zm339.5 435.5H394.4c-16.6 0-30 13.4-30 30s13.4 30 30 30h235.2c16.6 0 30-13.4 30-30s-13.4-30-30-30z" fill="#666"/><path d="M850.3 403.9H173.7c-33 0-60 27-60 60v360c0 33 27 60 60 60h676.6c33 0 60-27 60-60v-360c0-33-27-60-60-60zm-.1 419.8l-.1.1H173.9l-.1-.1V464l.1-.1h676.2l.1.1v359.7z" fill="#666"/></svg></span>' + dayjs(randomData.createTime).fromNow() + '</div><div class="random-content">' + randomData.content.replace(/!\[.*?\]\((.*?)\)/g, ' <img class="random-image" src="$1"/> ').replace(/\[(.*?)\]\((.*?)\)/g, ' <a href="$2" target="_blank">$1</a> ') + '</div>'
-    if (randomData.resources && randomData.resources.length > 0) {
-      var resources = randomData.resources;
-      for (var j = 0; j < resources.length; j++) {
-        var restype = resources[j].type.slice(0, 5);
-        var resexlink = resources[j].externalLink
-        var resLink = '', fileId = ''
-        if (resexlink) {
-          resLink = resexlink
-        } else {
-          fileId = resources[j].publicId || resources[j].filename
-          resLink = info.apiUrl + 'file/' + resources[j].name + '/' + fileId
-        }
-        if (restype == 'image') {
-          randomDom += '<img class="random-image" src="' + resLink + '"/>'
-        }
-        if (restype !== 'image') {
-          randomDom += '<a target="_blank" rel="noreferrer" href="' + resLink + '">' + resources[j].filename + '</a>'
-        }
+  var memosID = randomData.name.split('/').pop();
+  var randomDom = '<div class="random-item"><div class="random-time"><span id="random-link" data-uid="'+memosID+'"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M864 640a32 32 0 0 1 64 0v224.096A63.936 63.936 0 0 1 864.096 928H159.904A63.936 63.936 0 0 1 96 864.096V159.904C96 124.608 124.64 96 159.904 96H384a32 32 0 0 1 0 64H192.064A31.904 31.904 0 0 0 160 192.064v639.872A31.904 31.904 0 0 0 192.064 864h639.872A31.904 31.904 0 0 0 864 831.936V640zm-485.184 52.48a31.84 31.84 0 0 1-45.12-.128 31.808 31.808 0 0 1-.128-45.12L815.04 166.048l-176.128.736a31.392 31.392 0 0 1-31.584-31.744 32.32 32.32 0 0 1 31.84-32l255.232-1.056a31.36 31.36 0 0 1 31.584 31.584L924.928 388.8a32.32 32.32 0 0 1-32 31.84 31.392 31.392 0 0 1-31.712-31.584l.736-179.392L378.816 692.48z" fill="#666" data-spm-anchor-id="a313x.7781069.0.i12" class="selected"/></svg></span><span id="random-delete" data-uid="'+memosID+'" data-name="'+randomData.name+'"><svg class="icon" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" width="32" height="32"><path d="M224 322.6h576c16.6 0 30-13.4 30-30s-13.4-30-30-30H224c-16.6 0-30 13.4-30 30 0 16.5 13.5 30 30 30zm66.1-144.2h443.8c16.6 0 30-13.4 30-30s-13.4-30-30-30H290.1c-16.6 0-30 13.4-30 30s13.4 30 30 30zm339.5 435.5H394.4c-16.6 0-30 13.4-30 30s13.4 30 30 30h235.2c16.6 0 30-13.4 30-30s-13.4-30-30-30z" fill="#666"/><path d="M850.3 403.9H173.7c-33 0-60 27-60 60v360c0 33 27 60 60 60h676.6c33 0 60-27 60-60v-360c0-33-27-60-60-60zm-.1 419.8l-.1.1H173.9l-.1-.1V464l.1-.1h676.2l.1.1v359.7z" fill="#666"/></svg></span>'+dayjs(randomData.createTime).fromNow()+'</div><div class="random-content">'+randomData.content.replace(/!\[.*?\]\((.*?)\)/g,' <img class="random-image" src="$1"/> ').replace(/\[(.*?)\]\((.*?)\)/g,' <a href="$2" target="_blank">$1</a> ')+'</div>'
+  if(randomData.resources && randomData.resources.length > 0){
+    var resources = randomData.resources;
+    for(var j=0;j < resources.length;j++){
+      var restype = resources[j].type.slice(0,5);
+      var resexlink = resources[j].externalLink
+      var resLink = '',fileId=''
+      if(resexlink){
+        resLink = resexlink
+      }else{
+        fileId = resources[j].publicId || resources[j].filename
+        resLink = info.apiUrl+'file/'+resources[j].name+'/'+fileId
+      }
+      if(restype == 'image'){
+        randomDom += '<img class="random-image" src="'+resLink+'"/>'
+      }
+      if(restype !== 'image'){
+        randomDom += '<a target="_blank" rel="noreferrer" href="'+resLink+'">'+resources[j].filename+'</a>'
       }
     }
-    randomDom += '</div>'
-    window.ViewImage && ViewImage.init('.random-image')
-    $("#randomlist").html(randomDom).slideDown(500);
+  }
+  randomDom += '</div>'
+  window.ViewImage && ViewImage.init('.random-image')
+  $("#randomlist").html(randomDom).slideDown(500);
   })
 }
 
@@ -484,17 +495,17 @@ $(document).on("click", "#random-link", function () {
 
 $(document).on("click", "#random-delete", function () {
   get_info(function (info) {
-    var memoUid = $("#random-delete").data('uid');
+  // var memoUid = $("#random-delete").data('uid');
     var memosName = $("#random-delete").data('name');
     var deleteUrl = info.apiUrl + 'api/v1/' + memosName
     $.ajax({
       url: deleteUrl,
       type: "PATCH",
       data: JSON.stringify({
-        'uid': memoUid,
-        'rowStatus': "ARCHIVED"
+      // 'uid': memoUid,
+      'state': "ARCHIVED"
       }),
-      contentType: "application/json;",
+    contentType:"application/json",
       dataType: "json",
       headers: { 'Authorization': 'Bearer ' + info.apiTokens },
       success: function (result) {
@@ -585,7 +596,7 @@ function getOne(memosId) {
       $.ajax({
         url: getUrl,
         type: "GET",
-        contentType: "application/json;",
+          contentType:"application/json",
         dataType: "json",
         headers: { 'Authorization': 'Bearer ' + info.apiTokens },
         success: function (data) {
@@ -626,30 +637,30 @@ function sendText() {
           'content': content,
           'visibility': sendvisi
         }),
-        contentType: "application/json;",
-        dataType: "json",
-        headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-        success: function (data) {
-          if (info.resourceIdList.length > 0) {
+        contentType:"application/json",
+        dataType:"json",
+        headers : {'Authorization':'Bearer ' + info.apiTokens},
+        success: function(data){
+          if(info.resourceIdList.length > 0 ){
             //匹配图片
             $.ajax({
-              url: info.apiUrl + 'api/v1/' + data.name + '/resources',
-              type: "PATCH",
-              data: JSON.stringify({
+              url:info.apiUrl+'api/v1/'+data.name,
+              type:"PATCH",
+              data:JSON.stringify({
                 'resources': info.resourceIdList || [],
               }),
-              contentType: "application/json;",
-              dataType: "json",
-              headers: { 'Authorization': 'Bearer ' + info.apiTokens },
-              success: function (res) {
+              contentType:"application/json",
+              dataType:"json",
+              headers : {'Authorization':'Bearer ' + info.apiTokens},
+              success: function(res){
                 getOne(data.name)
               }
             })
-          } else {
+          }else{
             getOne(data.name)
           }
           chrome.storage.sync.set(
-            { open_action: '', open_content: '', resourceIdList: '' },
+            { open_action: '', open_content: '',resourceIdList:[]},
             function () {
               $.message({
                 message: chrome.i18n.getMessage("memoSuccess")
@@ -658,16 +669,15 @@ function sendText() {
               $("textarea[name=text]").val('')
             }
           )
-        }, error: function (err) {//清空open_action（打开时候进行的操作）,同时清空open_content
-          chrome.storage.sync.set(
-            { open_action: '', open_content: '', resourceIdList: '' },
-            function () {
-              $.message({
-                message: chrome.i18n.getMessage("memoFailed")
-              })
-            }
-          )
-        },
+      },error:function(err){//清空open_action（打开时候进行的操作）,同时清空open_content
+              chrome.storage.sync.set(
+                { open_action: '', open_content: '',resourceIdList:[] },
+                function () {
+                  $.message({
+                    message: chrome.i18n.getMessage("memoFailed")
+                  })
+                }
+              )},
       })
     } else {
       $.message({
