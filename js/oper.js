@@ -743,7 +743,7 @@ function createHabiticaTask() {
       let urlRegex = /\[(.*?)\]\((.*?)\)/;
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
-      title = getCleanTitle(url, title);
+      title = getCleanTitle(title, url);
       url = getCleanUrl(url);
       title = "[" + title + "]" + "(" + url + ")";
 
@@ -801,7 +801,7 @@ function createObsidianTask() {
       let urlRegex = /\[(.*?)\]\((.*?)\)/;
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
-      title = getCleanTitle(url, title);
+      title = getCleanTitle(title, url);
       url = getCleanUrl(url);
       const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
       $.ajax({
