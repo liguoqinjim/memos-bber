@@ -1,14 +1,6 @@
 dayjs.extend(window.dayjs_plugin_relativeTime)
 dayjs.locale('zh-cn')
 
-// 清除url中的query参数
-function clearUrl(url){
-  if(url.includes('bilibili.com')){
-    return url.split('?')[0];
-  }
-  return url;
-}
-
 function get_info(callback) {
   chrome.storage.sync.get(
     {
@@ -543,7 +535,7 @@ $('#newtodo').click(function () {
 $('#getlink').click(function () {
   chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
     // var linkHtml = " ["+tab.title+"]("+tab.url+") "
-    var linkHtml = " ["+tab.title+"]("+clearUrl(tab.url)+") "
+    var linkHtml = " ["+tab.title+"]("+getCleanUrl(tab.url)+") "
     console.log("liguoqinjim linkHtml", linkHtml);
     if(tab.url){
       add(linkHtml);
@@ -752,7 +744,7 @@ function createHabiticaTask() {
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
       title = getCleanTitle(url, title);
-      url = clearUrl(url);
+      url = getCleanUrl(url);
       title = "[" + title + "]" + "(" + url + ")";
 
       const habitica_url = "https://habitica.com/api/v3/tasks/user"
@@ -810,7 +802,7 @@ function createObsidianTask() {
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
       title = getCleanTitle(url, title);
-      url = clearUrl(url);
+      url = getCleanUrl(url);
       const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
       $.ajax({
         url: obsidian_n8n_url,
@@ -849,12 +841,28 @@ function createObsidianTask() {
   })
 }
 
-function getCleanTitle(url, title) {
+// 清除url中的query参数
+function getCleanUrl(url){
+  if(url.includes('bilibili.com')){
+    return url.split('?')[0];
+  }
+  return url;
+}
+
+function getCleanTitle(title, url) {
   // 特定网站处理
   if (url.includes('bbs.quantclass.cn')) {
     title = title.replace(' - 量化小论坛', '');
-  } else if (url.includes('twitter.com')) {
+  } else if (url.includes('twitter.com') || url.includes('x.com')) {
     title = title.replace(' / X', '');
+    // 去除所有http/https链接，包括短链接
+    title = title.replace(/https?:\/\/\S+/gi, '');
+    
+    // 去除首尾的各种引号字符
+    title = title.replace('：“', '：');
+    
+    // 清理多余的空格
+    title = title.replace(/\s+/g, ' ').trim();
   } else if (url.includes('youtube.com')) {
     title = title.replace(' - YouTube', '');
 

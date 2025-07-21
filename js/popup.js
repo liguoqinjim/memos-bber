@@ -12,7 +12,7 @@ function popupAuto() {
     //获取tab页内容
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
         // var linkHtml = " [" + tab.title + "](" + tab.url + ") "
-        var linkHtml = " [" + tab.title + "](" + clearUrl(tab.url) + ") "
+        var linkHtml = " [" + getCleanTitle(tab.title, tab.url) + "](" + getCleanUrl(tab.url) + ") "
         if (tab.url) {
             add(linkHtml);
 

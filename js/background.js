@@ -53,7 +53,7 @@ chrome.commands.onCommand.addListener(function (command) {
 });
 
 // 清除url中的query参数
-function clearUrl(url){
+function getCleanUrl(url){
   if(url.includes('bilibili.com')){
     return url.split('?')[0];
   }
@@ -61,14 +61,21 @@ function clearUrl(url){
 }
 
 // 清理标题，去除不同网站的特定后缀
-function clearTitle(title, url) {
+function getCleanTitle(title, url) {
   // 特定网站处理
   if (url.includes('bbs.quantclass.cn')) {
     title = title.replace(' - 量化小论坛', '');
   } else if (url.includes('twitter.com') || url.includes('x.com')) {
     // 去除X
     title = title.replace(' / X', '');
-    title = title.replace(/https?:\/\/\S+/gi, ''); // 使用正则表达式移除所有http/https链接
+    // 去除所有http/https链接，包括短链接
+    title = title.replace(/https?:\/\/\S+/gi, '');
+  
+    // 去除首尾的各种引号字符
+    title = title.replace('：“', '：');
+    
+    // 清理多余的空格
+    title = title.replace(/\s+/g, ' ').trim();
   } else if (url.includes('youtube.com')) {
     title = title.replace(' - YouTube', '');
     
@@ -103,11 +110,11 @@ function generateMarkdownLink() {
   //获取当前标签页的标题和链接
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     let title = tabs[0].title;
-    let url = clearUrl(tabs[0].url);
+    let url = getCleanUrl(tabs[0].url);
 
     // YouTube需要特殊处理，因为需要异步获取播放时间
     if (url.includes('youtube.com')) {
-      title = clearTitle(title, url); // 先清理基本标题
+      title = getCleanTitle(title, url); // 先清理基本标题
       
       // 获取页面的HTML内容，查询ytp-time-current这个class的内容
       chrome.scripting.executeScript(
@@ -131,8 +138,8 @@ function generateMarkdownLink() {
       return
     }
 
-    // 其他网站直接使用clearTitle函数
-    title = clearTitle(title, url);
+    // 其他网站直接使用getCleanTitle函数
+    title = getCleanTitle(title, url);
     let markdownLink = `[${title}](${url})`;
 
     // 剪贴板
