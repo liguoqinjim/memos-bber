@@ -49,6 +49,8 @@ chrome.contextMenus.onClicked.addListener(info => {
 chrome.commands.onCommand.addListener(function (command) {
   if (command === 'copy-markdown-link') {
     generateMarkdownLink();
+  } else if (command === 'copy-clean-link') {
+    generateCleanLink();
   }
 });
 
@@ -144,6 +146,16 @@ function generateMarkdownLink() {
 
     // 剪贴板
     addToClipboard(markdownLink);
+  });
+}
+
+function generateCleanLink() {
+  //获取当前标签页的链接
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    let url = getCleanUrl(tabs[0].url);
+    
+    // 剪贴板
+    addToClipboard(url);
   });
 }
 

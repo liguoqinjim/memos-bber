@@ -46,6 +46,13 @@
             "default": "Alt+2",
             "mac": "Alt+2"
          }
+      },
+      "copy-clean-link": {
+         "description": "Copy clean link",
+         "suggested_key": {
+            "default": "Alt+4",
+            "mac": "Alt+4"
+         }
       }
     }
 }
