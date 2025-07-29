@@ -51,6 +51,8 @@ chrome.commands.onCommand.addListener(function (command) {
     generateMarkdownLink();
   } else if (command === 'copy-clean-link') {
     generateCleanLink();
+  } else if (command === 'generate-python-command') {
+    generatePythonCommand();
   }
 });
 
@@ -185,4 +187,18 @@ async function addToClipboard(value) {
 // eslint-disable-next-line no-unused-vars -- This is an alternative implementation
 async function addToClipboardV2(value) {
   navigator.clipboard.writeText(value);
+}
+
+function generatePythonCommand() {
+  // 获取当前标签页的标题和URL
+  chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    let title = getCleanTitle(tabs[0].title, tabs[0].url);
+    let url = getCleanUrl(tabs[0].url);
+
+    // 构建Python命令
+    const command = `/Users/li/miniconda3/envs/py3-labs/bin/python /Users/li/Workspace/github.com/py3-tools/tool108/tool001.py --note-title "${title}" --template-name "知识点" --machine-name "mac_m1" --target-dir "900-待归类" --note-url "${url}"`;
+
+    // 复制到剪贴板
+    addToClipboard(command);
+  });
 }

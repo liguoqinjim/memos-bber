@@ -53,6 +53,13 @@
             "default": "Alt+4",
             "mac": "Alt+4"
          }
+      },
+      "generate-python-command": {
+         "description": "Generate Python command",
+         "suggested_key": {
+            "default": "Alt+5",
+            "mac": "Alt+5"
+         }
       }
     }
 }
