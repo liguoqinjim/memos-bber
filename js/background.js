@@ -196,7 +196,7 @@ function generatePythonCommand() {
     let url = getCleanUrl(tabs[0].url);
 
     // 构建Python命令
-    const command = `/Users/li/miniconda3/envs/py3-labs/bin/python /Users/li/Workspace/github.com/py3-tools/tool108/tool001.py --note-title "${title}" --template-name "知识点" --machine-name "mac_m1" --target-dir "900-待归类" --note-url "${url}"`;
+    const command = `/Users/li/miniconda3/envs/py3-labs/bin/python /Users/li/Workspace/github.com/py3-tools/tool108/tool001.py --note-title "${title}" --template-name "知识点-视频" --machine-name "mac_m1" --target-dir "900-待归类" --note-url "${url}"`;
 
     // 复制到剪贴板
     addToClipboard(command);
