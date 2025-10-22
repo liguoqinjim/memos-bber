@@ -14,7 +14,8 @@ function get_info(callback) {
       userid: '',
       resourceIdList: [],
       habitica_user_id: '',
-      habitica_api_key: ''
+      habitica_api_key: '',
+      kanban_url: ''
     },
     function (items) {
       var flag = false
@@ -36,6 +37,7 @@ function get_info(callback) {
       returnObject.resourceIdList = items.resourceIdList
       returnObject.habitica_user_id = items.habitica_user_id
       returnObject.habitica_api_key = items.habitica_api_key
+      returnObject.kanban_url = items.kanban_url
 
       if (callback) callback(returnObject)
     }
@@ -67,6 +69,7 @@ get_info(function (info) {
   $('#showInput').val(info.showtag)
   $('#habitica_user_id').val(info.habitica_user_id)
   $('#habitica_api_key').val(info.habitica_api_key)
+  $('#kanban_url').val(info.kanban_url)
   if (info.open_action === 'upload_image') {
     //打开的时候就是上传图片
     uploadImage(info.open_content)
@@ -706,6 +709,21 @@ $('#saveHabitica').click(function () {
   )
 });
 
+$('#saveKanban').click(function () {
+  // 保存 Kanban 信息
+  chrome.storage.sync.set(
+    {
+      kanban_url: $('#kanban_url').val()
+    },
+    function () {
+      $.message({
+        message: chrome.i18n.getMessage("saveKanbanSuccess")
+      });
+      $('#blog_info').hide();
+    }
+  )
+});
+
 $('#content_habitica_text').click(function () {
   var contentVal = $("textarea[name=text]").val()
   if (contentVal) {
@@ -721,6 +739,17 @@ $('#content_ob_text').click(function () {
   var contentVal = $("textarea[name=text]").val()
   if (contentVal) {
     createObsidianTask()
+  } else {
+    $.message({
+      message: chrome.i18n.getMessage("placeContent")
+    })
+  }
+})
+
+$('#content_kanban_text').click(function () {
+  var contentVal = $("textarea[name=text]").val()
+  if (contentVal) {
+    createKanbanTask()
   } else {
     $.message({
       message: chrome.i18n.getMessage("placeContent")
@@ -830,6 +859,56 @@ function createObsidianTask() {
           $.message({
             // message: chrome.i18n.getMessage("memoFailed")
             message: "创建 Obsidian 任务失败: " + JSON.stringify(err)
+          })
+        },
+      })
+    } else {
+      $.message({
+        message: chrome.i18n.getMessage("placeApiUrl")
+      })
+    }
+  })
+}
+
+function createKanbanTask() {
+  get_info(function (info) {
+    if (info.status) {
+      $.message({
+        message: chrome.i18n.getMessage("memoHabiticaUploading")
+      })
+      let content = $("textarea[name=text]").val()
+
+      let regex = /\[(.*?)\]\(.*?\)/;
+      let match = content.match(regex);
+      let title = match ? match[1] : '';
+      let urlRegex = /\[(.*?)\]\((.*?)\)/;
+      let urlMatch = content.match(urlRegex);
+      let url = urlMatch ? urlMatch[2] : '';
+      title = getCleanTitle(title, url);
+      url = getCleanUrl(url);
+      title = "[" + title + "]" + "(" + url + ")";
+
+      const kanban_url = "https://n8n.liguoqinjim.cn/webhook/b49ba024-e9a9-42da-93cf-05d826993ba8"
+      $.ajax({
+        url: kanban_url,
+        type: "POST",
+        data: JSON.stringify({
+          'text': title,
+          'checklist': [
+            {'text':"ANKI"},
+            {'text':"OB笔记-score"}
+          ]
+        }),
+        contentType: "application/json",
+        dataType: "json",
+        success: function (data) {
+          $.message({
+            message: chrome.i18n.getMessage("memoSuccess")
+          })
+        }, error: function (err) {
+          console.log("createKanbanTask error", err)
+          $.message({
+            message: "创建 Kanban 任务失败: " + JSON.stringify(err)
           })
         },
       })

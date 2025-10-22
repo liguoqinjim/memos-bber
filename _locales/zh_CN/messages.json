@@ -50,6 +50,15 @@
    "submitObBtn":{
       "message": "Obsidian"
    },
+   "submitKanbanBtn":{
+      "message": "Kanban"
+   },
+   "saveKanbanBtn":{
+      "message": "保存 Kanban"
+   },
+   "placeKanbanUrl":{
+      "message": "请填入 Kanban URL"
+   },
    "placeHideInput":{
       "message": "默认“仅自己可见”标签名"
    },
@@ -76,6 +85,12 @@
    },
    "saveSuccess":{
       "message": "保存信息成功"
+   },
+   "saveHabiticaSuccess":{
+      "message": "保存 Habitica 信息成功"
+   },
+   "saveKanbanSuccess":{
+      "message": "保存 Kanban 信息成功"
    },
    "searchNow":{
       "message": "想搜点啥？"

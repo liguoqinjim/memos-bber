@@ -50,6 +50,15 @@
    "submitObBtn":{
       "message": "Obsidian"
    },
+   "submitKanbanBtn":{
+      "message": "Kanban"
+   },
+   "saveKanbanBtn":{
+      "message": "Save Kanban"
+   },
+   "placeKanbanUrl":{
+      "message": "Kanban URL"
+   },
    "placeHideInput":{
       "message": "Default 'Only visible to you' Tag name"
    },
@@ -76,6 +85,12 @@
    },
    "saveSuccess":{
       "message": "Save Info Success!"
+   },
+   "saveHabiticaSuccess":{
+      "message": "Save Habitica Info Success!"
+   },
+   "saveKanbanSuccess":{
+      "message": "Save Kanban Info Success!"
    },
    "searchNow":{
       "message": "What are you looking for?"
