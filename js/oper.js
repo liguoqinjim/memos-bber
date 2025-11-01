@@ -942,6 +942,21 @@ function getCleanTitle(title, url) {
     
     // 清理多余的空格
     title = title.replace(/\s+/g, ' ').trim();
+
+    // 设置最大长度，最多不超过20个中文字符
+    const MAX_TITLE_LENGTH = 20;
+    const colonIndex = title.indexOf('：');
+    if (colonIndex !== -1) {
+      const prefix = title.substring(0, colonIndex + 1);
+      const suffix = title.substring(colonIndex + 1);
+      if (Array.from(suffix).length > MAX_TITLE_LENGTH) {
+        title = prefix + Array.from(suffix).slice(0, MAX_TITLE_LENGTH).join('');
+      }
+    } else {
+      if (Array.from(title).length > MAX_TITLE_LENGTH) {
+        title = Array.from(title).slice(0, MAX_TITLE_LENGTH).join('');
+      }
+    }
   } else if (url.includes('youtube.com')) {
     title = title.replace(' - YouTube', '');
 
