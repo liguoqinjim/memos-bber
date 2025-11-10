@@ -878,15 +878,14 @@ function createKanbanTask() {
       })
       let content = $("textarea[name=text]").val()
 
-      let regex = /\[(.*?)\]\(.*?\)/;
+      let regex = /\[(.*?)\]\((.*?)\)(.*)/;
       let match = content.match(regex);
       let title = match ? match[1] : '';
-      let urlRegex = /\[(.*?)\]\((.*?)\)/;
-      let urlMatch = content.match(urlRegex);
-      let url = urlMatch ? urlMatch[2] : '';
+      let url = match ? match[2] : '';
+      let note = match ? match[3].trim() : '';
       title = getCleanTitle(title, url);
       url = getCleanUrl(url);
-      title = "[" + title + "]" + "(" + url + ")";
+      title = "[" + title + "]" + "(" + url + ")" + " " + note;
 
       const kanban_url = "https://n8n.liguoqinjim.cn/webhook/b49ba024-e9a9-42da-93cf-05d826993ba8"
       $.ajax({
