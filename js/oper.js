@@ -846,9 +846,42 @@ function createObsidianTask() {
         dataType: "json",
         success: function (data) {
           if (data.result === 1) {
-            $.message({
-              message: data['data']
-            })
+            // 如果返回是`笔记已存在: 绝对路径`，则解析出绝对路径并生成 Obsidian URL，提示是否在新标签页打开
+            if (typeof data['data'] === "string" && data['data'].indexOf("笔记已存在") === 0) {
+              // 1. 用分割，获取已存在文件的绝对路径
+              // 示例返回：笔记已存在: /Users/li/Workspace/github.com/ObSpace/900-待归类/xxx.md
+              const noteMsg = data['data'];
+              const parts = noteMsg.split(": ");
+
+              $.message({
+                message: data['data']
+              })
+              if (parts.length >= 2) {
+                const absPath = parts.slice(1).join(": ").trim();
+
+                // 2. 把绝对路径转换为 Obsidian 的 URL
+                // 绝对路径前缀（Obsidian vault 目录）
+                const vaultRoot = "/Users/li/Workspace/github.com/ObSpace/";
+                let relativePath = absPath;
+                if (absPath.indexOf(vaultRoot) === 0) {
+                  relativePath = absPath.substring(vaultRoot.length);
+                }
+                const obsidianUrl = "obsidian://open?vault=ObSpace&file=" + encodeURIComponent(relativePath);
+
+                // 3. 弹出确认框，是否使用新标签页打开 Obsidian URL
+                const shouldOpen = window.confirm("笔记已存在，是否在新标签页中打开对应的 Obsidian 笔记？");
+                if (shouldOpen) {
+                  chrome.tabs.create({
+                    url: obsidianUrl,
+                    active: true
+                  });
+                }
+              }
+            } else{
+              $.message({
+                message: data['data']
+              })
+            }
           } else {
             $.message({
               message: chrome.i18n.getMessage("memoSuccess")
