@@ -943,11 +943,19 @@ function getCleanTitle(title, url) {
     title = title.replace(/\s+/g, ' ').trim();
 
     // 设置最大长度，最多不超过20个中文字符
-    const MAX_TITLE_LENGTH = 20;
+    const MAX_TITLE_LENGTH = 38;
     const colonIndex = title.indexOf('：');
     if (colonIndex !== -1) {
-      const prefix = title.substring(0, colonIndex + 1);
-      const suffix = title.substring(colonIndex + 1);
+      let prefix = title.substring(0, colonIndex + 1);
+      // 如果 prefix是以`(数字) 开头，则去掉。使用正则表达式判断
+      const regex = /^\(\d+\)\s+/;
+      if (regex.test(prefix)) {
+        prefix = prefix.replace(regex, '');
+      }
+
+      let suffix = title.substring(colonIndex + 1);
+      // 去除suffix开头和结尾的引号（支持中英文引号）
+      suffix = suffix.replace(/^[""]/, '').replace(/[“]$/, '').replace(/[”]$/, '');
       if (Array.from(suffix).length > MAX_TITLE_LENGTH) {
         title = prefix + Array.from(suffix).slice(0, MAX_TITLE_LENGTH).join('');
       }
