@@ -968,11 +968,11 @@ function getCleanTitle(title, url) {
     title = title.replace('_哔哩哔哩_bilibili', '');
   } else if (url.includes('github.com')) {
     // 判断url是否符合这个正则表达式：https://github.com/jaegertracing/jaeger
-    const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+/;
+    const regex = /https:\/\/github.com\/[^\/]+\/[^\/]+$/;
     if (regex.test(url)) {
-      // 使用‘:’分割title
-      const titleParts = title.split(':');
-      const repoName = titleParts[0].split('/')[1];
+      // 从URL中提取仓库名
+      const urlParts = url.split('/');
+      const repoName = urlParts[urlParts.length - 1];
       title = "GitHub - " + repoName;
     }
   } else if (url.includes('v2ex')) {
