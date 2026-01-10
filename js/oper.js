@@ -955,14 +955,33 @@ function createKanbanTask() {
       })
       let content = $("textarea[name=text]").val()
 
+      // 去除`/`，替换为`,`
+      content = content.replace(/\//g, ',')
+
       let regex = /\[(.*?)\]\((.*?)\)(.*)/;
       let match = content.match(regex);
       let title = match ? match[1] : '';
       let url = match ? match[2] : '';
       let note = match ? match[3].trim() : '';
+
+      // 分割
+      const splitPattern = "|||"
+      let titles = title.split(splitPattern)
+      // title = titles[0].trim()
+      let author = ""
+      let duration = ""
+      if (titles.length == 2) {
+        // 只有作者
+        author = titles[1].trim()
+      } else if (titles.length == 3) {
+        // 作者 + 时长
+        author = titles[1].trim()
+        duration = titles[2].trim()
+      }
+
       title = getCleanTitle(title, url);
       url = getCleanUrl(url);
-      title = "[" + title + "]" + "(" + url + ")" + " " + note;
+      // title = "[" + title + "]" + "(" + url + ")" + " " + note;
 
       const kanban_url = "https://n8n.liguoqinjim.cn/webhook/b49ba024-e9a9-42da-93cf-05d826993ba8"
       $.ajax({
@@ -973,7 +992,8 @@ function createKanbanTask() {
           'checklist': [
             {'text':"ANKI"},
             {'text':"OB笔记-score"}
-          ]
+          ],
+          'duration': duration,
         }),
         contentType: "application/json",
         dataType: "json",
