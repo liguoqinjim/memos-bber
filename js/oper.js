@@ -766,29 +766,53 @@ function createHabiticaTask() {
       //$("#content_submit_text").attr('disabled','disabled');
       let content = $("textarea[name=text]").val()
 
+      // 去除`/`，替换为`,`
+      content = content.replace(/\//g, ',')
+
       let regex = /\[(.*?)\]\(.*?\)/;
       let match = content.match(regex);
       let title = match ? match[1] : '';
       let urlRegex = /\[(.*?)\]\((.*?)\)/;
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
+
+      // 分割
+      const splitPattern = "|||"
+      let titles = title.split(splitPattern)
+      title = titles[0].trim()
+      let author = ""
+      let duration = ""
+      if (titles.length == 2) {
+        // 只有作者
+        author = titles[1].trim()
+      } else if (titles.length == 3) {
+        // 作者 + 时长
+        author = titles[1].trim()
+        duration = titles[2].trim()
+      }
+
       title = getCleanTitle(title, url);
       url = getCleanUrl(url);
       title = "[" + title + "]" + "(" + url + ")";
 
       const habitica_url = "https://habitica.com/api/v3/tasks/user"
+      let data = {
+        'text': title,
+        'type': 'todo',
+        'checklist': [
+          {'text':"ANKI"},
+          {'text':"OB笔记-score"}
+        ],
+        'priority': 1.5,
+      }
+      if (duration !== "") {
+        data['notes'] = "[](完成时间-" + duration + ")"
+      }
+
       $.ajax({
         url: habitica_url,
         type: "POST",
-        data: JSON.stringify({
-          'text': title,
-          'type': 'todo',
-          'checklist': [
-            {'text':"ANKI"},
-            {'text':"OB笔记-score"}
-          ],
-          'priority': 1.5,
-        }),
+        data: JSON.stringify(data),
         contentType: "application/json",
         dataType: "json",
         headers: {
