@@ -80,6 +80,67 @@ function popupAuto() {
                 add(linkHtml);
                 toBottom();
             });
+        } else if (tab.url && (tab.url.includes("x.com/") || tab.url.includes("twitter.com/"))) {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    const authorElement = document.querySelector('[data-testid="User-Name"] span');
+                    const author = authorElement ? authorElement.innerText.trim() : "";
+                    return { author };
+                }
+            }, (results) => {
+                let extraParts = [];
+                if (results && results[0] && results[0].result) {
+                    const { author } = results[0].result;
+                    if (author) extraParts.push(`Author:${author}`);
+                }
+                // For X, the title often starts with "X 上的 " or contains "Twitter". 
+                // We'll try to refine the title if it follows "X 上的 Name: Content"
+                let refinedTitle = title;
+                if (title.startsWith("X 上的 ")) {
+                    refinedTitle = title.replace(/^X 上的 /, "");
+                    // If it's Format "Name: Content", we might want just "Content" or the full thing
+                    // User's example: [AI Insights：太TM高效了...|||Author:范凯说 AI]
+                    // The source title was "X 上的 范凯说 AI | AI Insights：太TM高效了..."
+                    // So we remove "X 上的 " and potentially the Name if it's redundant.
+                    // But to be safe, we just remove the prefix and the author part if possible.
+                    if (extraParts.length > 0) {
+                        const authorName = results[0].result.author;
+                        const escapedAuthor = authorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                        const regex = new RegExp("^" + escapedAuthor + "\\s*[:|：|\\s]*");
+                        refinedTitle = refinedTitle.replace(regex, "");
+                    }
+                }
+
+                let titleWithExtra = refinedTitle;
+                if (extraParts.length > 0) {
+                    titleWithExtra += "|||" + extraParts.join("|||");
+                }
+                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
+                add(linkHtml);
+                toBottom();
+            });
+        } else if (tab.url && tab.url.includes("mp.weixin.qq.com/s")) {
+            chrome.scripting.executeScript({
+                target: { tabId: tab.id },
+                func: () => {
+                    const author = document.getElementById('js_name')?.innerText?.trim() || "";
+                    return { author };
+                }
+            }, (results) => {
+                let extraParts = [];
+                if (results && results[0] && results[0].result) {
+                    const { author } = results[0].result;
+                    if (author) extraParts.push(`Author:${author}`);
+                }
+                let titleWithExtra = title;
+                if (extraParts.length > 0) {
+                    titleWithExtra += "|||" + extraParts.join("|||");
+                }
+                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
+                add(linkHtml);
+                toBottom();
+            });
         } else if (tab.url) {
             var linkHtml = " [" + title + "](" + url + ") "
             add(linkHtml);
