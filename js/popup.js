@@ -19,7 +19,22 @@ function popupAuto() {
             chrome.scripting.executeScript({
                 target: { tabId: tab.id },
                 func: () => {
-                    const author = document.querySelector('.up-name')?.innerText?.trim() || "";
+                    let author = document.querySelector('.up-name')?.innerText?.trim();
+                    if (!author) {
+                        const staffNodes = document.querySelectorAll('.staff-info');
+                        if (staffNodes.length > 0) {
+                            for (const node of staffNodes) {
+                                if (node.innerText.includes('UP主')) {
+                                    author = node.querySelector('.staff-name')?.innerText?.trim();
+                                    break;
+                                }
+                            }
+                            if (!author) {
+                                author = document.querySelector('.staff-name')?.innerText?.trim();
+                            }
+                        }
+                    }
+                    author = author || "";
                     let duration = document.querySelector('.bpx-player-ctrl-time-duration')?.innerText?.trim();
                     if (!duration) {
                         duration = document.querySelector('.bpx-player-ctrl-duration-last')?.innerText?.trim();
