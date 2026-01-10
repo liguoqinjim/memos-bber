@@ -824,12 +824,31 @@ function createObsidianTask() {
       })
       let content = $("textarea[name=text]").val()
 
+      // 去除`/`，替换为`,`
+      content = content.replace(/\//g, ',')
+
       let regex = /\[(.*?)\]\(.*?\)/;
       let match = content.match(regex);
       let title = match ? match[1] : '';
       let urlRegex = /\[(.*?)\]\((.*?)\)/;
       let urlMatch = content.match(urlRegex);
       let url = urlMatch ? urlMatch[2] : '';
+
+      // 分割
+      const splitPattern = "|||"
+      let titles = title.split(splitPattern)
+      title = titles[0].trim()
+      let author = ""
+      let duration = ""
+      if (titles.length == 2) {
+        // 只有作者
+        author = titles[1].trim()
+      } else if (titles.length == 3) {
+        // 作者 + 时长
+        author = titles[1].trim()
+        duration = titles[2].trim()
+      }
+
       title = getCleanTitle(title, url);
       url = getCleanUrl(url);
       const obsidian_n8n_url = "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
@@ -840,7 +859,8 @@ function createObsidianTask() {
           "note_title": title,
           "template_name": "知识点-视频",
           "target_dir": "900-待归类",
-          "note_url": url
+          "note_url": url,
+          "author": author,
         }),
         contentType: "application/json",
         dataType: "json",
