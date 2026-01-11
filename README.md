@@ -58,3 +58,10 @@ Chrome 应用商店：<https://chrome.google.com/webstore/detail/memos-bber/cbhj
 
 2022.10.24 添加 visiblity 发送设置。
 
+## 测试链接
+1. B站
+    https://www.bilibili.com/video/BV1jviTBuENv
+	https://www.bilibili.com/video/BV1WxiRBDEdx ，这个是特殊情况，有两个作者
+2. https://www.youtube.com/watch?v=xFg4fg7h9EI
+3. https://mp.weixin.qq.com/s/VF4PrAKImhtnvYL8yl4MMQ
+4. https://x.com/robbinfan/status/2009849040171872386
