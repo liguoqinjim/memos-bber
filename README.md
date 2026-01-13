@@ -65,3 +65,4 @@ Chrome 应用商店：<https://chrome.google.com/webstore/detail/memos-bber/cbhj
 2. https://www.youtube.com/watch?v=xFg4fg7h9EI
 3. https://mp.weixin.qq.com/s/VF4PrAKImhtnvYL8yl4MMQ
 4. https://x.com/robbinfan/status/2009849040171872386
+5. https://bbs.quantclass.cn/thread/69105

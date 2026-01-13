@@ -1,173 +1,82 @@
+// Global variable to store current metadata for submission
+window.currentMetadata = null;
+
 function toBottom() {
     var tc = document.getElementById("content");
     tc.focus();
-
     tc.scrollTop = tc.scrollHeight;
 }
 
-function popupAuto() {
-    //清空输入框
-    $("textarea[name=text]").val('')
+function updateMetadataDisplay(metadata) {
+    const metadataTextarea = document.getElementById("metadata");
+    if (metadataTextarea && metadata) {
+        metadataTextarea.value = window.MetadataExtractor.formatMetadataForDisplay(metadata);
+        window.currentMetadata = metadata;
+    }
+}
 
-    //获取tab页内容
+function popupAuto() {
+    // Clear input fields
+    $("textarea[name=text]").val('')
+    $("#metadata").val('')
+    window.currentMetadata = null;
+
+    // Get current tab content
     chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-        // var linkHtml = " [" + tab.title + "](" + tab.url + ") "
+        if (!tab.url) {
+            $.message({
+                message: chrome.i18n.getMessage("getTabFailed")
+            });
+            return;
+        }
+
         var title = getCleanTitle(tab.title, tab.url);
         var url = getCleanUrl(tab.url);
 
-        if (tab.url && tab.url.includes("bilibili.com/video/")) {
+        // Detect platform and get extractor
+        const platform = window.MetadataExtractor.detectPlatform(tab.url);
+        const extractorFunc = window.MetadataExtractor.getExtractorFunction(platform);
+
+        if (platform !== 'generic') {
+            // Execute platform-specific extraction in page context
             chrome.scripting.executeScript({
                 target: { tabId: tab.id },
-                func: () => {
-                    let author = document.querySelector('.up-name')?.innerText?.trim();
-                    if (!author) {
-                        const staffNodes = document.querySelectorAll('.staff-info');
-                        if (staffNodes.length > 0) {
-                            for (const node of staffNodes) {
-                                if (node.innerText.includes('UP主')) {
-                                    author = node.querySelector('.staff-name')?.innerText?.trim();
-                                    break;
-                                }
-                            }
-                            if (!author) {
-                                author = document.querySelector('.staff-name')?.innerText?.trim();
-                            }
-                        }
-                    }
-                    author = author || "";
-                    let duration = document.querySelector('.bpx-player-ctrl-time-duration')?.innerText?.trim();
-                    if (!duration) {
-                        duration = document.querySelector('.bpx-player-ctrl-duration-last')?.innerText?.trim();
-                    }
-                    if (!duration) {
-                        duration = document.querySelector('.bpx-player-ctrl-duration-duration')?.innerText?.trim();
-                    }
-                    if (!duration) { // try meta tag
-                        const meta = document.querySelector('meta[itemprop="duration"]');
-                        if (meta) duration = meta.content;
-                    }
-                    return { author, duration };
-                }
+                func: extractorFunc
             }, (results) => {
-                let extraParts = [];
+                let extractedData = {};
                 if (results && results[0] && results[0].result) {
-                    let { author, duration } = results[0].result;
-                    if (author) extraParts.push(`Author:${author}`);
-                    if (duration) {
-                        if (duration.split(':').length === 2) {
-                            duration = '00:' + duration;
-                        }
-                        extraParts.push(`时长:${duration}`);
-                    }
-                }
-                let titleWithExtra = title;
-                if (extraParts.length > 0) {
-                    titleWithExtra += "|||" + extraParts.join("|||");
-                }
-                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
-                add(linkHtml);
-                toBottom();
-            });
-        } else if (tab.url && (tab.url.includes("youtube.com/watch") || tab.url.includes("youtu.be/"))) {
-            chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                    const author = document.querySelector('ytd-video-owner-renderer #channel-name a')?.innerText?.trim() || "";
-                    let duration = document.querySelector('.ytp-time-duration')?.innerText?.trim();
-                    if (!duration) {
-                        const meta = document.querySelector('meta[itemprop="duration"]');
-                        if (meta) duration = meta.content; // Fallback to ISO format if visible not found
-                    }
-                    return { author, duration };
-                }
-            }, (results) => {
-                let extraParts = [];
-                if (results && results[0] && results[0].result) {
-                    const { author, duration } = results[0].result;
-                    if (author) extraParts.push(`Author:${author}`);
-                    if (duration) extraParts.push(`时长:${duration}`);
-                }
-                let titleWithExtra = title;
-                if (extraParts.length > 0) {
-                    titleWithExtra += "|||" + extraParts.join("|||");
-                }
-                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
-                add(linkHtml);
-                toBottom();
-            });
-        } else if (tab.url && (tab.url.includes("x.com/") || tab.url.includes("twitter.com/"))) {
-            chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                    const authorElement = document.querySelector('[data-testid="User-Name"] span');
-                    const author = authorElement ? authorElement.innerText.trim() : "";
-                    return { author };
-                }
-            }, (results) => {
-                let extraParts = [];
-                if (results && results[0] && results[0].result) {
-                    const { author } = results[0].result;
-                    if (author) extraParts.push(`Author:${author}`);
-                }
-                // For X, the title often starts with "X 上的 " or contains "Twitter". 
-                // We'll try to refine the title if it follows "X 上的 Name: Content"
-                let refinedTitle = title;
-                if (title.startsWith("X 上的 ")) {
-                    refinedTitle = title.replace(/^X 上的 /, "");
-                    // If it's Format "Name: Content", we might want just "Content" or the full thing
-                    // User's example: [AI Insights：太TM高效了...|||Author:范凯说 AI]
-                    // The source title was "X 上的 范凯说 AI | AI Insights：太TM高效了..."
-                    // So we remove "X 上的 " and potentially the Name if it's redundant.
-                    // But to be safe, we just remove the prefix and the author part if possible.
-                    if (extraParts.length > 0) {
-                        const authorName = results[0].result.author;
-                        const escapedAuthor = authorName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                        const regex = new RegExp("^" + escapedAuthor + "\\s*[:|：|\\s]*");
-                        refinedTitle = refinedTitle.replace(regex, "");
-                    }
+                    extractedData = results[0].result;
                 }
 
-                let titleWithExtra = refinedTitle;
-                if (extraParts.length > 0) {
-                    titleWithExtra += "|||" + extraParts.join("|||");
-                }
-                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
-                add(linkHtml);
-                toBottom();
-            });
-        } else if (tab.url && tab.url.includes("mp.weixin.qq.com/s")) {
-            chrome.scripting.executeScript({
-                target: { tabId: tab.id },
-                func: () => {
-                    const author = document.getElementById('js_name')?.innerText?.trim() || "";
-                    return { author };
-                }
-            }, (results) => {
-                let extraParts = [];
-                if (results && results[0] && results[0].result) {
-                    const { author } = results[0].result;
-                    if (author) extraParts.push(`Author:${author}`);
-                }
-                let titleWithExtra = title;
-                if (extraParts.length > 0) {
-                    titleWithExtra += "|||" + extraParts.join("|||");
-                }
-                var linkHtml = " [" + titleWithExtra + "](" + url + ") ";
-                add(linkHtml);
-                toBottom();
-            });
-        } else if (tab.url) {
-            var linkHtml = " [" + title + "](" + url + ") "
-            add(linkHtml);
+                // Build metadata object
+                const metadata = window.MetadataExtractor.buildMetadata({
+                    title: title,
+                    url: url,
+                    platform: platform,
+                    extractedData: extractedData
+                });
 
-            //移动光标到最后
-            toBottom();
+                // Update displays
+                var linkHtml = " [" + title + "](" + url + ") ";
+                add(linkHtml);
+                updateMetadataDisplay(metadata);
+                toBottom();
+            });
         } else {
-            $.message({
-                message: chrome.i18n.getMessage("getTabFailed")
-            })
+            // Generic page - no special extraction
+            const metadata = window.MetadataExtractor.buildMetadata({
+                title: title,
+                url: url,
+                platform: 'generic',
+                extractedData: {}
+            });
+
+            var linkHtml = " [" + title + "](" + url + ") ";
+            add(linkHtml);
+            updateMetadataDisplay(metadata);
+            toBottom();
         }
-    })
+    });
 }
 
 window.onload = function () {
