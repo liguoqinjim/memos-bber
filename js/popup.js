@@ -31,6 +31,7 @@ function popupAuto() {
         }
 
         var title = getCleanTitle(tab.title, tab.url);
+        var fullTitle = getCleanTitle(tab.title, tab.url, false);
         var url = getCleanUrl(tab.url);
 
         // Detect platform and get extractor
@@ -50,7 +51,7 @@ function popupAuto() {
 
                 // Build metadata object
                 const metadata = window.MetadataExtractor.buildMetadata({
-                    title: title,
+                    title: fullTitle,
                     url: url,
                     platform: platform,
                     extractedData: extractedData
@@ -65,7 +66,7 @@ function popupAuto() {
         } else {
             // Generic page - no special extraction
             const metadata = window.MetadataExtractor.buildMetadata({
-                title: title,
+                title: fullTitle,
                 url: url,
                 platform: 'generic',
                 extractedData: {}

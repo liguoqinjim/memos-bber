@@ -957,7 +957,7 @@ function createHabiticaTask() {
       if (window.currentMetadata) {
         // Use new metadata format
         const metadata = window.currentMetadata;
-        title = metadata.title || "";
+        title = getCleanTitle(metadata.title, metadata.url, true);
         url = metadata.url || "";
         author = metadata.author || "";
         duration = metadata.duration || "";
@@ -1041,7 +1041,7 @@ function createObsidianTask() {
 
       if (window.currentMetadata) {
         const metadata = window.currentMetadata;
-        title = metadata.title || "";
+        title = getCleanTitle(metadata.title, metadata.url, true);
         url = metadata.url || "";
         author = metadata.author || "";
       } else {
@@ -1161,7 +1161,7 @@ function createKanbanTask() {
 
       if (window.currentMetadata) {
         const metadata = window.currentMetadata;
-        title = metadata.title || "";
+        title = getCleanTitle(metadata.title, metadata.url, true);
         url = metadata.url || "";
         author = metadata.author || "";
         duration = metadata.duration || "";
@@ -1222,7 +1222,7 @@ function getCleanUrl(url) {
   return url;
 }
 
-function getCleanTitle(title, url) {
+function getCleanTitle(title, url, shouldTruncate = true) {
   // 特定网站处理
   if (url.includes('bbs.quantclass.cn')) {
     title = title.replace(' - 量化小论坛', '');
@@ -1238,25 +1238,27 @@ function getCleanTitle(title, url) {
     title = title.replace(/\s+/g, ' ').trim();
 
     // 设置最大长度，最多不超过20个中文字符
-    const MAX_TITLE_LENGTH = 38;
-    const colonIndex = title.indexOf('：');
-    if (colonIndex !== -1) {
-      let prefix = title.substring(0, colonIndex + 1);
-      // 如果 prefix是以`(数字) 开头，则去掉。使用正则表达式判断
-      const regex = /^\(\d+\)\s+/;
-      if (regex.test(prefix)) {
-        prefix = prefix.replace(regex, '');
-      }
+    if (shouldTruncate) {
+      const MAX_TITLE_LENGTH = 38;
+      const colonIndex = title.indexOf('：');
+      if (colonIndex !== -1) {
+        let prefix = title.substring(0, colonIndex + 1);
+        // 如果 prefix是以`(数字) 开头，则去掉。使用正则表达式判断
+        const regex = /^\(\d+\)\s+/;
+        if (regex.test(prefix)) {
+          prefix = prefix.replace(regex, '');
+        }
 
-      let suffix = title.substring(colonIndex + 1);
-      // 去除suffix开头和结尾的引号（支持中英文引号）
-      suffix = suffix.replace(/^[""]/, '').replace(/[“]$/, '').replace(/[”]$/, '');
-      if (Array.from(suffix).length > MAX_TITLE_LENGTH) {
-        title = prefix + Array.from(suffix).slice(0, MAX_TITLE_LENGTH).join('');
-      }
-    } else {
-      if (Array.from(title).length > MAX_TITLE_LENGTH) {
-        title = Array.from(title).slice(0, MAX_TITLE_LENGTH).join('');
+        let suffix = title.substring(colonIndex + 1);
+        // 去除suffix开头和结尾的引号（支持中英文引号）
+        suffix = suffix.replace(/^[""]/, '').replace(/[“]$/, '').replace(/[”]$/, '');
+        if (Array.from(suffix).length > MAX_TITLE_LENGTH) {
+          title = prefix + Array.from(suffix).slice(0, MAX_TITLE_LENGTH).join('');
+        }
+      } else {
+        if (Array.from(title).length > MAX_TITLE_LENGTH) {
+          title = Array.from(title).slice(0, MAX_TITLE_LENGTH).join('');
+        }
       }
     }
   } else if (url.includes('youtube.com')) {

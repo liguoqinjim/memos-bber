@@ -11,22 +11,31 @@ const platformExtractors = {
     name: 'bilibili',
     match: (url) => url.includes('bilibili.com/video/'),
     extract: () => {
-      let author = document.querySelector('.up-name')?.innerText?.trim();
-      if (!author) {
+      // Try to get author (handle joint posts)
+      let author = "";
+      const upName = document.querySelector('.up-name')?.innerText?.trim();
+
+      if (upName) {
+        author = upName;
+      } else {
         const staffNodes = document.querySelectorAll('.staff-info');
         if (staffNodes.length > 0) {
+          const names = [];
           for (const node of staffNodes) {
-            if (node.innerText.includes('UP主')) {
-              author = node.querySelector('.staff-name')?.innerText?.trim();
-              break;
-            }
+            const name = node.querySelector('.staff-name')?.innerText?.trim();
+            if (name) names.push(name);
           }
-          if (!author) {
-            author = document.querySelector('.staff-name')?.innerText?.trim();
-          }
+          author = names.join(', ');
         }
       }
-      author = author || "";
+
+      if (!author) {
+        // Fallback for new UI or other layouts
+        const members = document.querySelectorAll('.members-info .membersinfo-upcard-wrap .staff-name');
+        if (members.length > 0) {
+          author = Array.from(members).map(m => m.innerText.trim()).join(', ');
+        }
+      }
 
       let duration = document.querySelector('.bpx-player-ctrl-time-duration')?.innerText?.trim();
       if (!duration) {
@@ -47,12 +56,15 @@ const platformExtractors = {
 
       // Try to get publish date
       let createDate = "";
-      const dateElement = document.querySelector('.pubdate-text')?.innerText?.trim();
-      if (dateElement) {
-        // Format: "2024年1月1日" or "2024-01-01"
-        const match = dateElement.match(/(\d{4})[年-](\d{1,2})[月-](\d{1,2})/);
-        if (match) {
-          createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+      const dateSelectors = ['.pubdate-text', '.pubdate-ip-text', '.video-data span:nth-child(2)'];
+      for (const selector of dateSelectors) {
+        const text = document.querySelector(selector)?.innerText?.trim();
+        if (text) {
+          const match = text.match(/(\d{4})[年-](\d{1,2})[月-](\d{1,2})/);
+          if (match) {
+            createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            break;
+          }
         }
       }
 
@@ -64,7 +76,9 @@ const platformExtractors = {
     name: 'youtube',
     match: (url) => url.includes('youtube.com/watch') || url.includes('youtu.be/'),
     extract: () => {
-      const author = document.querySelector('ytd-video-owner-renderer #channel-name a')?.innerText?.trim() || "";
+      const author = document.querySelector('ytd-video-owner-renderer #channel-name a')?.innerText?.trim() ||
+        document.querySelector('.yt-user-info a')?.innerText?.trim() || "";
+
       let duration = document.querySelector('.ytp-time-duration')?.innerText?.trim();
       if (!duration) {
         const meta = document.querySelector('meta[itemprop="duration"]');
@@ -73,12 +87,16 @@ const platformExtractors = {
 
       // Try to get publish date
       let createDate = "";
-      const dateElement = document.querySelector('#info-strings yt-formatted-string')?.innerText?.trim();
-      if (dateElement) {
-        // Format varies, try to parse common patterns
-        const match = dateElement.match(/(\d{4})[年/-](\d{1,2})[月/-](\d{1,2})/);
-        if (match) {
-          createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+      const dateSelectors = ['#info-strings yt-formatted-string', '#info-container span:nth-child(3)', 'meta[itemprop="datePublished"]'];
+      for (const selector of dateSelectors) {
+        const el = document.querySelector(selector);
+        const text = (selector.startsWith('meta')) ? el?.content : el?.innerText?.trim();
+        if (text) {
+          const match = text.match(/(\d{4})[年/-](\d{1,2})[月/-](\d{1,2})/);
+          if (match) {
+            createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            break;
+          }
         }
       }
 
@@ -90,12 +108,13 @@ const platformExtractors = {
     name: 'twitter',
     match: (url) => url.includes('x.com/') || url.includes('twitter.com/'),
     extract: () => {
-      const authorElement = document.querySelector('[data-testid="User-Name"] span');
+      const mainTweet = document.querySelector('article[role="article"]');
+      const authorElement = mainTweet ? mainTweet.querySelector('[data-testid="User-Name"] span') : document.querySelector('[data-testid="User-Name"] span');
       const author = authorElement ? authorElement.innerText.trim() : "";
 
       // Try to get tweet date
       let createDate = "";
-      const timeElement = document.querySelector('time');
+      const timeElement = mainTweet ? mainTweet.querySelector('time') : document.querySelector('time');
       if (timeElement) {
         const datetime = timeElement.getAttribute('datetime');
         if (datetime) {
@@ -111,15 +130,20 @@ const platformExtractors = {
     name: 'wechat',
     match: (url) => url.includes('mp.weixin.qq.com/s'),
     extract: () => {
-      const author = document.getElementById('js_name')?.innerText?.trim() || "";
+      const author = document.getElementById('js_name')?.innerText?.trim() ||
+        document.querySelector('.profile_nickname')?.innerText?.trim() || "";
 
       // Try to get publish date
       let createDate = "";
-      const dateElement = document.getElementById('publish_time')?.innerText?.trim();
-      if (dateElement) {
-        const match = dateElement.match(/(\d{4})[年/-](\d{1,2})[月/-](\d{1,2})/);
-        if (match) {
-          createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+      const dateSelectors = ['#publish_time', '.publish_time', '#post-date'];
+      for (const selector of dateSelectors) {
+        const text = document.querySelector(selector)?.innerText?.trim();
+        if (text) {
+          const match = text.match(/(\d{4})[年/-](\d{1,2})[月/-](\d{1,2})/);
+          if (match) {
+            createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+            break;
+          }
         }
       }
 
@@ -137,14 +161,26 @@ const platformExtractors = {
       const createDateElem = document.querySelector('.publish-time span:nth-child(1)');
       if (createDateElem) {
         // Format: "发布于 2025-09-20 22:53"
-        createDate = createDateElem.innerText.replace('发布于', '').trim();
+        const text = createDateElem.innerText.replace('发布于', '').trim();
+        const match = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+          createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+        } else {
+          createDate = text;
+        }
       }
 
       let modifyDate = "";
       const modifyDateElem = document.querySelector('.publish-time span:nth-child(2)');
       if (modifyDateElem) {
         // Format: "（编辑于 2025-12-24 09:25）"
-        modifyDate = modifyDateElem.innerText.replace(/[（）编辑于]/g, '').trim();
+        const text = modifyDateElem.innerText.replace(/[（）编辑于]/g, '').trim();
+        const match = text.match(/(\d{4})-(\d{1,2})-(\d{1,2})/);
+        if (match) {
+          modifyDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+        } else {
+          modifyDate = text;
+        }
       }
 
       return { author, createDate, modifyDate };
