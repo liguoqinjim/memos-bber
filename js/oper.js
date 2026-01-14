@@ -1192,6 +1192,7 @@ function createKanbanTask() {
           'url': url,
           "author": author,
           'note': note,
+          'metadata': window.currentMetadata || null
         }),
         contentType: "application/json",
         dataType: "json",
