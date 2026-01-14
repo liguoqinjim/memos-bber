@@ -5,6 +5,7 @@
  * Each platform defines a match function and an extract function.
  */
 
+
 // Platform-specific extractors
 const platformExtractors = {
   bilibili: {
@@ -83,6 +84,11 @@ const platformExtractors = {
       if (!duration) {
         const meta = document.querySelector('meta[itemprop="duration"]');
         if (meta) duration = meta.content;
+      }
+
+      // Normalize duration to HH:MM:SS format
+      if (duration && duration.split(':').length === 2) {
+        duration = '00:' + duration;
       }
 
       // Try to get publish date
