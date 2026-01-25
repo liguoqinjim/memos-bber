@@ -1,49 +1,49 @@
 chrome.runtime.onInstalled.addListener(() => {
-    chrome.contextMenus.create(
-      {
-        type: 'normal',
-        title: chrome.i18n.getMessage("sendTo"),
-        id: 'Memos-send-selection',
-        contexts: ['selection']
-      },
-    )
-    chrome.contextMenus.create(
-      {
-        type: 'normal',
-        title: chrome.i18n.getMessage("sendLinkTo"),
-        id: 'Memos-send-link',
-        contexts: ['link', 'page']
-      },
-    )
-    chrome.contextMenus.create(
-      {
-        type: 'normal',
-        title: chrome.i18n.getMessage("sendImageTo"),
-        id: 'Memos-send-image',
-        contexts: ['image']
-      },
-    )
+  chrome.contextMenus.create(
+    {
+      type: 'normal',
+      title: chrome.i18n.getMessage("sendTo"),
+      id: 'Memos-send-selection',
+      contexts: ['selection']
+    },
+  )
+  chrome.contextMenus.create(
+    {
+      type: 'normal',
+      title: chrome.i18n.getMessage("sendLinkTo"),
+      id: 'Memos-send-link',
+      contexts: ['link', 'page']
+    },
+  )
+  chrome.contextMenus.create(
+    {
+      type: 'normal',
+      title: chrome.i18n.getMessage("sendImageTo"),
+      id: 'Memos-send-image',
+      contexts: ['image']
+    },
+  )
 })
 chrome.contextMenus.onClicked.addListener(info => {
-    let tempCont=''
-    switch(info.menuItemId){
-      case 'Memos-send-selection':
-        tempCont = info.selectionText + '\n'
-        break
-      case 'Memos-send-link':
-        tempCont = (info.linkUrl || info.pageUrl) + '\n'
-        break
-      case 'Memos-send-image':
-        tempCont = `![](${info.srcUrl})` + '\n'
-        break
+  let tempCont = ''
+  switch (info.menuItemId) {
+    case 'Memos-send-selection':
+      tempCont = info.selectionText + '\n'
+      break
+    case 'Memos-send-link':
+      tempCont = (info.linkUrl || info.pageUrl) + '\n'
+      break
+    case 'Memos-send-image':
+      tempCont = `![](${info.srcUrl})` + '\n'
+      break
+  }
+  chrome.storage.sync.get({ open_action: "save_text", open_content: '' }, function (items) {
+    if (items.open_action === 'upload_image') {
+      alert(chrome.i18n.getMessage("picPending"));
+    } else {
+      chrome.storage.sync.set({ open_action: "save_text", open_content: items.open_content + tempCont });
     }
-    chrome.storage.sync.get({open_action: "save_text", open_content: ''}, function(items) {
-      if(items.open_action === 'upload_image') {
-        alert(chrome.i18n.getMessage("picPending"));
-      } else {
-        chrome.storage.sync.set({open_action: "save_text", open_content: items.open_content + tempCont});
-      }
-    })
+  })
 })
 
 chrome.commands.onCommand.addListener(function (command) {
@@ -57,8 +57,8 @@ chrome.commands.onCommand.addListener(function (command) {
 });
 
 // 清除url中的query参数
-function getCleanUrl(url){
-  if(url.includes('bilibili.com')){
+function getCleanUrl(url) {
+  if (url.includes('bilibili.com')) {
     return url.split('?')[0];
   }
   return url;
@@ -70,19 +70,28 @@ function getCleanTitle(title, url) {
   if (url.includes('bbs.quantclass.cn')) {
     title = title.replace(' - 量化小论坛', '');
   } else if (url.includes('twitter.com') || url.includes('x.com')) {
+    // 去除 "X 上的 " 前缀（Twitter/X中文版的固定前缀）
+    title = title.replace(/^X 上的 /, '');
+
     // 去除X
     title = title.replace(' / X', '');
     // 去除所有http/https链接，包括短链接
     title = title.replace(/https?:\/\/\S+/gi, '');
-  
+
     // 去除首尾的各种引号字符
-    title = title.replace('：“', '：');
-    
+    title = title.replace('："', '：');
+
     // 清理多余的空格
     title = title.replace(/\s+/g, ' ').trim();
+
+    // 去掉第一个冒号之前的作者部分（包括冒号），因为作者会在metadata中单独提取
+    const colonIndex = title.indexOf('：');
+    if (colonIndex !== -1) {
+      title = title.substring(colonIndex + 1).trim();
+    }
   } else if (url.includes('youtube.com')) {
     title = title.replace(' - YouTube', '');
-    
+
     // 判断开头是否有这样的格式： "(1) 當年為什麼退出聯合國？"，去掉开头
     const regex = /^\(\d+\)\s/; // regex pattern to match "(1) " at the beginning of the title
     if (regex.test(title)) {
@@ -106,7 +115,7 @@ function getCleanTitle(title, url) {
   } else if (url.includes('web.cafe')) {
     title = title.replace(' | Web.Cafe', '');
   }
-  
+
   return title;
 }
 
@@ -119,7 +128,7 @@ function generateMarkdownLink() {
     // YouTube需要特殊处理，因为需要异步获取播放时间
     if (url.includes('youtube.com')) {
       title = getCleanTitle(title, url); // 先清理基本标题
-      
+
       // 获取页面的HTML内容，查询ytp-time-current这个class的内容
       chrome.scripting.executeScript(
         {
@@ -129,8 +138,8 @@ function generateMarkdownLink() {
         (results) => {
           if (results && results[0] && results[0].result) {
             const currentTime = results[0].result;
-            
-            if (currentTime != "0:00"){
+
+            if (currentTime != "0:00") {
               title += ` | ${currentTime}`;
             }
           }
@@ -155,7 +164,7 @@ function generateCleanLink() {
   //获取当前标签页的链接
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
     let url = getCleanUrl(tabs[0].url);
-    
+
     // 剪贴板
     addToClipboard(url);
   });

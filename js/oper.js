@@ -1228,38 +1228,32 @@ function getCleanTitle(title, url, shouldTruncate = true) {
   if (url.includes('bbs.quantclass.cn')) {
     title = title.replace(' - 量化小论坛', '');
   } else if (url.includes('twitter.com') || url.includes('x.com')) {
+    // 去除 "X 上的 " 前缀（Twitter/X中文版的固定前缀）
+    title = title.replace(/^X 上的 /, '');
+
     title = title.replace(' / X', '');
     // 去除所有http/https链接，包括短链接
     title = title.replace(/https?:\/\/\S+/gi, '');
 
     // 去除首尾的各种引号字符
-    title = title.replace('：“', '：');
+    title = title.replace('："', '：');
 
     // 清理多余的空格
     title = title.replace(/\s+/g, ' ').trim();
 
-    // 设置最大长度，最多不超过20个中文字符
+    // 去掉第一个冒号之前的作者部分（包括冒号），因为作者会在metadata中单独提取
+    const firstColonIndex = title.indexOf('：');
+    if (firstColonIndex !== -1) {
+      title = title.substring(firstColonIndex + 1).trim();
+      // 去除开头和结尾的引号（支持中英文引号）
+      title = title.replace(/^["“]/, '').replace(/["”]$/, '');
+    }
+
+    // 设置最大长度，最多不超过指定的字符数
     if (shouldTruncate) {
       const MAX_TITLE_LENGTH = 38;
-      const colonIndex = title.indexOf('：');
-      if (colonIndex !== -1) {
-        let prefix = title.substring(0, colonIndex + 1);
-        // 如果 prefix是以`(数字) 开头，则去掉。使用正则表达式判断
-        const regex = /^\(\d+\)\s+/;
-        if (regex.test(prefix)) {
-          prefix = prefix.replace(regex, '');
-        }
-
-        let suffix = title.substring(colonIndex + 1);
-        // 去除suffix开头和结尾的引号（支持中英文引号）
-        suffix = suffix.replace(/^[""]/, '').replace(/[“]$/, '').replace(/[”]$/, '');
-        if (Array.from(suffix).length > MAX_TITLE_LENGTH) {
-          title = prefix + Array.from(suffix).slice(0, MAX_TITLE_LENGTH).join('');
-        }
-      } else {
-        if (Array.from(title).length > MAX_TITLE_LENGTH) {
-          title = Array.from(title).slice(0, MAX_TITLE_LENGTH).join('');
-        }
+      if (Array.from(title).length > MAX_TITLE_LENGTH) {
+        title = Array.from(title).slice(0, MAX_TITLE_LENGTH).join('');
       }
     }
   } else if (url.includes('youtube.com')) {
