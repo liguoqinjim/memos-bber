@@ -50,11 +50,6 @@ const platformExtractors = {
         if (meta) duration = meta.content;
       }
 
-      // Normalize duration to HH:MM:SS format
-      if (duration && duration.split(':').length === 2) {
-        duration = '00:' + duration;
-      }
-
       // Try to get publish date
       let createDate = "";
       const dateSelectors = ['.pubdate-text', '.pubdate-ip-text', '.video-data span:nth-child(2)'];
@@ -84,11 +79,6 @@ const platformExtractors = {
       if (!duration) {
         const meta = document.querySelector('meta[itemprop="duration"]');
         if (meta) duration = meta.content;
-      }
-
-      // Normalize duration to HH:MM:SS format
-      if (duration && duration.split(':').length === 2) {
-        duration = '00:' + duration;
       }
 
       // Try to get publish date
@@ -256,6 +246,28 @@ function getExtractorFunction(platformName) {
 }
 
 /**
+ * Format duration string to HH:mm:ss
+ * @param {string} duration - Duration string (e.g., "12:06", "00:2:06")
+ * @returns {string} Formatted duration (e.g., "00:12:06", "00:02:06")
+ */
+function formatDuration(duration) {
+  if (!duration) return duration;
+
+  // Split by colon and trim parts
+  let parts = duration.split(':').map(p => p.trim());
+
+  // Pad each part with leading zero to ensure at least 2 digits
+  parts = parts.map(p => p.padStart(2, '0'));
+
+  // Ensure there are at least 3 parts (HH:mm:ss), unshift "00" if needed
+  while (parts.length < 3) {
+    parts.unshift('00');
+  }
+
+  return parts.join(':');
+}
+
+/**
  * Build complete metadata object from extracted data
  * @param {Object} params - Parameters
  * @param {string} params.title - Cleaned page title
@@ -276,7 +288,7 @@ function buildMetadata({ title, url, platform, extractedData }) {
     metadata.author = extractedData.author;
   }
   if (extractedData.duration) {
-    metadata.duration = extractedData.duration;
+    metadata.duration = formatDuration(extractedData.duration);
   }
   if (extractedData.createDate) {
     metadata.create_date = extractedData.createDate;
