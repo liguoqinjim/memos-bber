@@ -193,6 +193,33 @@ const platformExtractors = {
     }
   },
 
+  webcafe: {
+    name: '哥飞社群',
+    match: (url) => url.includes('new.web.cafe/topic/'),
+    extract: () => {
+      const author = document.querySelector("body > div.min-h-\\[90vh\\].mt-4 > div > div.flex.flex-col.justify-between.xl\\:gap-4.xl\\:flex-row.lg\\:gap-12 > div.xl\\:sticky.top-8.flex.h-full.w-full.flex-none.flex-col.gap-0.xl\\:gap-2.bg-transparent.bg-white.px-4.xl\\:shadow-sm.p-6.xl\\:w-\\[20rem\\] > div.mb-2.xl\\:mb-0.flex > div > span.cursor-pointer.text-xl.font-semibold.leading-6.text-gray-900")?.innerText?.trim() || "";
+
+      let createDate = "";
+      const timeElem = document.querySelector("body > div.min-h-\\[90vh\\].mt-4 > div > div.flex.flex-col.justify-between.xl\\:gap-4.xl\\:flex-row.lg\\:gap-12 > div.xl\\:sticky.top-8.flex.h-full.w-full.flex-none.flex-col.gap-0.xl\\:gap-2.bg-transparent.bg-white.px-4.xl\\:shadow-sm.p-6.xl\\:w-\\[20rem\\] > div.mb-2.xl\\:mb-0.flex > div > span.text-gray-500 > time");
+      if (timeElem) {
+        const datetime = timeElem.getAttribute('datetime');
+        if (datetime) {
+          createDate = datetime.split('T')[0];
+        } else {
+          const text = timeElem.innerText.trim();
+          const match = text.match(/(\d{4})[年/-](\d{1,2})[月/-](\d{1,2})/);
+          if (match) {
+            createDate = `${match[1]}-${match[2].padStart(2, '0')}-${match[3].padStart(2, '0')}`;
+          } else {
+            createDate = text;
+          }
+        }
+      }
+
+      return { author, createDate };
+    }
+  },
+
   generic: {
     name: 'generic',
     match: () => true, // Always matches as fallback
@@ -203,7 +230,7 @@ const platformExtractors = {
 };
 
 // Order matters - check specific platforms first, generic last
-const platformOrder = ['bilibili', 'youtube', 'twitter', 'wechat', 'quantclass', 'generic'];
+const platformOrder = ['bilibili', 'youtube', 'twitter', 'wechat', 'quantclass', 'webcafe', 'generic'];
 
 /**
  * Detect which platform the URL belongs to
@@ -240,7 +267,7 @@ function getExtractorFunction(platformName) {
 function buildMetadata({ title, url, platform, extractedData }) {
   const metadata = {
     title: title,
-    platform: platform,
+    platform: platformExtractors[platform]?.name || platform,
     url: url
   };
 
