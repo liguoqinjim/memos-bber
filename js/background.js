@@ -114,6 +114,12 @@ function getCleanTitle(title, url) {
     title = title.replace('__什么值得买', '-什么值得买');
   } else if (url.includes('web.cafe')) {
     title = title.replace(' | Web.Cafe', '');
+  } else if (url.includes('linux.do')) {
+    // 去掉第一个 " - " 之后的所有内容（包括分类和网站名）
+    const firstDashIndex = title.indexOf(' - ');
+    if (firstDashIndex !== -1) {
+      title = title.substring(0, firstDashIndex).trim();
+    }
   }
 
   return title;
