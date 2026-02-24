@@ -183,6 +183,15 @@ const platformExtractors = {
     }
   },
 
+  linuxdo: {
+    name: 'LINUX DO',
+    match: (url) => url.includes('linux.do'),
+    extract: () => {
+      const author = document.querySelector('.first.username a')?.innerText?.trim() || "";
+      return { author };
+    }
+  },
+
   webcafe: {
     name: '哥飞社群',
     match: (url) => url.includes('new.web.cafe/topic/'),
@@ -220,7 +229,7 @@ const platformExtractors = {
 };
 
 // Order matters - check specific platforms first, generic last
-const platformOrder = ['bilibili', 'youtube', 'twitter', 'wechat', 'quantclass', 'webcafe', 'generic'];
+const platformOrder = ['bilibili', 'youtube', 'twitter', 'wechat', 'quantclass', 'linuxdo', 'webcafe', 'generic'];
 
 /**
  * Detect which platform the URL belongs to
