@@ -187,8 +187,43 @@ const platformExtractors = {
     name: 'LINUX DO',
     match: (url) => url.includes('linux.do'),
     extract: () => {
-      const author = document.querySelector('.first.username a')?.innerText?.trim() || "";
-      return { author };
+      let author = "";
+      let createDate = "";
+
+      try {
+        const preloadedEl = document.getElementById('data-preloaded');
+        if (preloadedEl) {
+          const preloadedStr = preloadedEl.getAttribute('data-preloaded');
+          if (preloadedStr) {
+            const preloadedData = JSON.parse(preloadedStr);
+            const topicKey = Object.keys(preloadedData).find(k => k.startsWith('topic_'));
+            if (topicKey) {
+              const topicData = JSON.parse(preloadedData[topicKey]);
+              const firstPost = topicData?.post_stream?.posts?.[0];
+              if (firstPost) {
+                author = firstPost.username || firstPost.name || "";
+                if (firstPost.created_at) {
+                  createDate = firstPost.created_at.split('T')[0];
+                }
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Linux DO metadata extraction error:", e);
+      }
+
+      // Fallback
+      if (!author) {
+        author = document.querySelector('#post_1 .username a, .first.username a, .first.full-name a')?.innerText?.trim() || "";
+      }
+
+      const result = { author };
+      if (createDate) {
+        result.createDate = createDate;
+      }
+
+      return result;
     }
   },
 
