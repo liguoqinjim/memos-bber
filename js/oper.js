@@ -1007,9 +1007,14 @@ function createHabiticaTask() {
           'x-api-key': info.habitica_api_key
         },
         success: function (data) {
-          $.message({
-            message: chrome.i18n.getMessage("memoSuccess")
-          })
+          const taskId = data.data && (data.data._id || data.data.id)
+          if (taskId && !(info.forward_all_mode && info.webhook_url)) {
+            moveHabiticaTask(taskId, -1, info)
+          } else {
+            $.message({
+              message: chrome.i18n.getMessage("memoSuccess")
+            })
+          }
         }, error: function (err) {
           console.log("createHabiticaTask error", err)
           $.message({
@@ -1020,6 +1025,31 @@ function createHabiticaTask() {
     } else {
       $.message({
         message: chrome.i18n.getMessage("placeApiUrl")
+      })
+    }
+  })
+}
+
+function moveHabiticaTask(taskId, position, info) {
+  const moveUrl = `https://habitica.com/api/v3/tasks/${taskId}/move/to/${position}`
+  $.ajax({
+    url: moveUrl,
+    type: "POST",
+    contentType: "application/json",
+    dataType: "json",
+    headers: {
+      'x-client': 'memos-bber',
+      'x-api-user': info.habitica_user_id,
+      'x-api-key': info.habitica_api_key
+    },
+    success: function () {
+      $.message({
+        message: chrome.i18n.getMessage("memoSuccess")
+      })
+    }, error: function (err) {
+      console.log("moveHabiticaTask error", err)
+      $.message({
+        message: "Habitica 任务已创建，但排序失败: " + JSON.stringify(err)
       })
     }
   })
