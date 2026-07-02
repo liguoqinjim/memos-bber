@@ -948,31 +948,14 @@ function createHabiticaTask() {
 
       let content = $("textarea[name=text]").val()
 
-      // Use stored metadata if available
-      let title = "";
-      let url = "";
-      let author = "";
-      let duration = "";
-
+      const resolved = resolveTitleAndUrl(content, window.currentMetadata)
+      let title = resolved.title
+      let url = resolved.url
+      let author = ""
+      let duration = ""
       if (window.currentMetadata) {
-        // Use new metadata format
-        const metadata = window.currentMetadata;
-        title = getCleanTitle(metadata.title, metadata.url, true);
-        url = metadata.url || "";
-        author = metadata.author || "";
-        duration = metadata.duration || "";
-      } else {
-        // Fallback: parse from content (legacy support)
-        content = content.replace(/\//g, ',')
-        let regex = /\[(.*?)\]\(.*?\)/;
-        let match = content.match(regex);
-        title = match ? match[1] : '';
-        let urlRegex = /\[(.*?)\]\((.*?)\)/;
-        let urlMatch = content.match(urlRegex);
-        url = urlMatch ? urlMatch[2] : '';
-
-        title = getCleanTitle(title, url);
-        url = getCleanUrl(url);
+        author = window.currentMetadata.author || ""
+        duration = window.currentMetadata.duration || ""
       }
 
       // Build task title as markdown link
@@ -1064,29 +1047,10 @@ function createObsidianTask() {
 
       let content = $("textarea[name=text]").val()
 
-      // Use stored metadata if available
-      let title = "";
-      let url = "";
-      let author = "";
-
-      if (window.currentMetadata) {
-        const metadata = window.currentMetadata;
-        title = getCleanTitle(metadata.title, metadata.url, true);
-        url = metadata.url || "";
-        author = metadata.author || "";
-      } else {
-        // Fallback: parse from content (legacy support)
-        content = content.replace(/\//g, ',')
-        let regex = /\[(.*?)\]\(.*?\)/;
-        let match = content.match(regex);
-        title = match ? match[1] : '';
-        let urlRegex = /\[(.*?)\]\((.*?)\)/;
-        let urlMatch = content.match(urlRegex);
-        url = urlMatch ? urlMatch[2] : '';
-
-        title = getCleanTitle(title, url);
-        url = getCleanUrl(url);
-      }
+      const resolved = resolveTitleAndUrl(content, window.currentMetadata)
+      let title = resolved.title
+      let url = resolved.url
+      let author = window.currentMetadata ? window.currentMetadata.author || "" : ""
 
       let obsidian_url = info.obsidian_url || "https://n8n.liguoqinjim.cn/webhook/cfda0c03-5f6a-40d9-8d09-303c9eada2e3"
       if (info.forward_all_mode && info.webhook_url) {
@@ -1183,24 +1147,11 @@ function createKanbanTask() {
         note = match[3].trim().replace(/\//g, ',');
       }
 
-      // Use stored metadata if available
-      let title = "";
-      let url = "";
-      let author = "";
-      let duration = "";
-
-      if (window.currentMetadata) {
-        const metadata = window.currentMetadata;
-        title = getCleanTitle(metadata.title, metadata.url, true);
-        url = metadata.url || "";
-        author = metadata.author || "";
-        duration = metadata.duration || "";
-      } else {
-        // Fallback: parse from content (legacy support)
-        title = match ? match[1] : '';
-        url = match ? match[2] : '';
-        title = getCleanTitle(title, url);
-      }
+      const resolved = resolveTitleAndUrl(content, window.currentMetadata)
+      let title = resolved.title
+      let url = resolved.url
+      let author = window.currentMetadata ? window.currentMetadata.author || "" : ""
+      let duration = window.currentMetadata ? window.currentMetadata.duration || "" : ""
 
       // Build task title as markdown link with note
       const taskTitle = "[" + title + "]" + "(" + url + ")" + (note ? " " + note : "");
@@ -1251,6 +1202,30 @@ function getCleanUrl(url) {
     return url.split('?')[0];
   }
   return url;
+}
+
+function resolveTitleAndUrl(content, metadata) {
+  let userTitle = ''
+  let userUrl = ''
+  const linkMatch = content.trim().match(/\[([\s\S]*?)\]\(([^)]+)\)/)
+  if (linkMatch) {
+    userTitle = linkMatch[1]
+    userUrl = linkMatch[2]
+  }
+
+  let title, url
+  if (metadata) {
+    title = userTitle || metadata.title
+    url = metadata.url || userUrl || ''
+    title = getCleanTitle(title, url, true)
+  } else {
+    title = userTitle
+    url = userUrl
+    title = getCleanTitle(title, url)
+    url = getCleanUrl(url)
+  }
+
+  return { title, url }
 }
 
 function getCleanTitle(title, url, shouldTruncate = true) {
