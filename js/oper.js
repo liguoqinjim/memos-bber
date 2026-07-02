@@ -646,7 +646,8 @@ function sendText() {
   get_info(function (info) {
     if (info.status) {
       $.message({
-        message: chrome.i18n.getMessage("memoUploading")
+        message: chrome.i18n.getMessage("memoUploading"),
+        autoClose: false
       })
       //$("#content_submit_text").attr('disabled','disabled');
       let content = $("textarea[name=text]").val()
@@ -943,7 +944,8 @@ function createHabiticaTask() {
   get_info(function (info) {
     if (info.status) {
       $.message({
-        message: chrome.i18n.getMessage("memoHabiticaUploading")
+        message: chrome.i18n.getMessage("memoHabiticaUploading"),
+        autoClose: false
       })
 
       let content = $("textarea[name=text]").val()
@@ -1042,7 +1044,8 @@ function createObsidianTask() {
   get_info(function (info) {
     if (info.status) {
       $.message({
-        message: chrome.i18n.getMessage("memoHabiticaUploading")
+        message: chrome.i18n.getMessage("memoHabiticaUploading"),
+        autoClose: false
       })
 
       let content = $("textarea[name=text]").val()
@@ -1134,7 +1137,8 @@ function createKanbanTask() {
   get_info(function (info) {
     if (info.status) {
       $.message({
-        message: chrome.i18n.getMessage("memoHabiticaUploading")
+        message: chrome.i18n.getMessage("memoHabiticaUploading"),
+        autoClose: false
       })
 
       let content = $("textarea[name=text]").val()
