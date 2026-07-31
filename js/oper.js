@@ -704,6 +704,7 @@ function sendText() {
               $.message({
                 message: chrome.i18n.getMessage("memoSuccess")
               })
+              setTimeout(() => window.close(), 300)
               //$("#content_submit_text").removeAttr('disabled');
               $("textarea[name=text]").val('')
             }
@@ -999,6 +1000,7 @@ function createHabiticaTask() {
             $.message({
               message: chrome.i18n.getMessage("memoSuccess")
             })
+            setTimeout(() => window.close(), 300)
           }
         }, error: function (err) {
           console.log("createHabiticaTask error", err)
@@ -1031,6 +1033,7 @@ function moveHabiticaTask(taskId, position, info) {
       $.message({
         message: chrome.i18n.getMessage("memoSuccess")
       })
+      setTimeout(() => window.close(), 300)
     }, error: function (err) {
       console.log("moveHabiticaTask error", err)
       $.message({
@@ -1116,6 +1119,7 @@ function createObsidianTask() {
             $.message({
               message: chrome.i18n.getMessage("memoSuccess")
             })
+            setTimeout(() => window.close(), 300)
           }
         }, error: function (err) {//清空open_action（打开时候进行的操作）,同时清空open_content
           console.log("createObsidianTask error", err)
@@ -1185,6 +1189,7 @@ function createKanbanTask() {
           $.message({
             message: chrome.i18n.getMessage("memoSuccess")
           })
+          setTimeout(() => window.close(), 300)
         }, error: function (err) {
           console.log("createKanbanTask error", err)
           $.message({
